@@ -184,7 +184,7 @@
         const w = stage.contentWindow;
         // Hide the harness's pretend page; only Tippy's window shows.
         const css = w.document.createElement('style');
-        css.textContent = 'body{background:transparent!important}.fake,.note{display:none!important}';
+        css.textContent = 'body{background:transparent!important}.fake,.note{display:none!important}*,*::before,*::after{transition:none!important;animation-duration:0s!important;animation-delay:0s!important}';
         w.document.head.appendChild(css);
         // The harness also seeds a "did it buy?" order for testing — not for the store.
         const tidy = async () => {

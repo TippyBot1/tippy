@@ -191,7 +191,7 @@ describe('sizes: words, dollars, and the plain number after the verb', () => {
   it.each<[string, RegExp]>([
     ['sell 10 at 700k', /10% of your bag, or \$10 worth\?/],
     ['sell 0.5 at 1m', /0\.5% of your bag, \$0\.50 worth, or half\?/],
-    ['sell 10 at 700', /10% of your bag, or \$10 worth\?.*"700"/],
+    ['sell 10 at 700', /^10% of your bag or \$10 worth — and is "700" \$700K MC\? Say "sell 10% at 700k" or "sell \$10 at 700k"\.$/],
     ['sell $3', /At what level\?.*"sell \$3 at 2x"/],
     ['sell 1m', /Sell all of it at \$1M MC\?.*not a number of coins/],
     ['sell half at 20%', /Up 20% or down 20%\?/],
@@ -200,7 +200,7 @@ describe('sizes: words, dollars, and the plain number after the verb', () => {
     ['sell half between 650k and 700k', /not a range/],
     ['sell $3 and 50% at 2x', /How much should it sell — \$3 or 50%\?/],
     ['sell 150% at 2x', /more than your whole bag/],
-    ['buy 20% at 500k', /I buy with a \$ amount, not a %/],
+    ['buy 20% at 500k', /I buy with a \$ amount, not a share of your cash\. Try "buy \$10 at 500k"/],
     ['buy 0.5 sol at 500k', /I buy with dollars, not sols/],
     ['buy 500k', /Is "500k" how much to spend\?/],
     ['buy $20 at 5oo k', /Is "5oo k" meant to be 500k\?/],
@@ -216,7 +216,7 @@ describe('sizes: words, dollars, and the plain number after the verb', () => {
   });
 
   it('"buy 20% …" asks with the share, so the card can show what that is of your cash', () => {
-    expect(parse('buy 20% at 500k')).toMatchObject({ type: 'unknown', cashPct: 20 });
+    expect(parse('buy 20% at 500k')).toMatchObject({ type: 'unknown', buy: { where: 'at 500k', pct: 20 } });
   });
 });
 
@@ -357,11 +357,12 @@ describe('asks instead of guessing', () => {
     ['buy $10', /Where should I buy/],
     ['buy $10 now', /not on the spot/],
     ['sell half now', /not on the spot/],
-    ['tp at 2', /"2x" or "2m mcap"/],
-    ['tp at 500', /"500k mcap"/],
-    ['sl 30', /"-30%"/],
+    ['tp at 2', /"tp at 2x" or "tp at 2m"/],
+    ['tp at 500', /Is "500" \$500K MC\? Say "tp at 500k"\.$/],
+    ['sl 30', /"sl -30%" or "sl at 30k"/],
     ['buy $10 at 20%', /20% dip or a 20% breakout/],
-    ['buy 10 at 5', /how much to spend or where to buy/],
+    ['buy 10 at 5', /Is "5" a dip or a market cap\? Say "buy \$10 if it dips 5%" or "buy \$10 at 5k"/],
+    ['buy at 5', /how much to spend, or where to buy/],
     ['tp at 2x and 5x', /two levels/],
     ['tp at 2x and sl at -30%', /One thing at a time/],
     ['buy at 1m and sell at 2m', /One thing at a time/],

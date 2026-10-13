@@ -59,7 +59,7 @@ function Hero() {
           <li>✓ Never asks for your keys</li>
           <li>✓ One permission: fomo.family</li>
           <li>✓ Open source</li>
-          <li>✓ Tiny — under 150 KB download</li>
+          <li>✓ Tiny — under 200 KB download</li>
         </ul>
       </div>
       <div class="hero-bot" aria-hidden="true">

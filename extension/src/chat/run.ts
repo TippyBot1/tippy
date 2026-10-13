@@ -24,7 +24,7 @@ import type { BuyInput, BuyOrder, LevelStatus, Plan, PlanInput, Trigger } from '
 import type { CommandResult } from '../shared/messages';
 import type { Preset, Settings } from '../shared/settings';
 import { dropText, levelProblem, levelText, levelX, type Now } from '../ui/levels';
-import type { ChatPlan, CoinSpec, Intent, LevelSpec, LevelToTrigger } from './intent';
+import type { AskFor, ChatPlan, CoinSpec, Intent, LevelSpec, LevelToTrigger } from './intent';
 
 /** A coin as the chat sees it (the window's token fits). */
 export interface ChatCoin {
@@ -114,7 +114,8 @@ const toTrigger = (level: LevelSpec, base: Now) => levelToTrigger(level, { price
 // Words
 
 const sym = (c: { symbol: string }) => `$${c.symbol}`;
-const trimPct = (n: number) => `${+n.toFixed(1)}%`;
+/** "25%", "12.5%", "0.25%" — never a rounder number than the one that's sent. */
+const trimPct = (n: number) => `${+n.toFixed(n < 1 ? 2 : 1)}%`;
 /** "$10", "$12.50", "$1.5K". */
 const money = (n: number) => (n >= 1000 ? formatUsd(n) : Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
 const nowOf = (c: { priceUSD: number | null; mc: number | null }): Now => ({ priceUSD: c.priceUSD, mc: c.mc });
@@ -140,6 +141,36 @@ function typed(l: LevelSpec): string {
       return formatX(l.value);
     case 'pct':
       return `${l.value > 0 ? '+' : ''}${l.value}%`;
+  }
+}
+
+/** A share of the bag the way you'd type it: "all", "half", "25%". */
+const sizeWords = (pct: number) => (pct >= 100 ? 'all' : pct === 50 ? 'half' : trimPct(pct));
+
+/**
+ * The order again with another level, the way you'd type it — so a "did you mean 2m?"
+ * comes with a message that works on its own: "tp at 2m", "sell half at 700k".
+ */
+function retyped(intent: Intent, level: string): string {
+  switch (intent.type) {
+    case 'add-tp': {
+      const size = intent.sellUsd != null ? money(intent.sellUsd) : intent.sellPct != null ? sizeWords(intent.sellPct) : null;
+      return size ? `sell ${size} at ${level}` : intent.anySide ? `sell at ${level}` : `tp at ${level}`;
+    }
+    case 'add-stop': {
+      const size = intent.sellUsd != null ? money(intent.sellUsd) : sizeWords(intent.sellPct ?? 100);
+      return `sell ${size} if it drops to ${level}`;
+    }
+    case 'set-sl':
+      return `sl at ${level}`;
+    case 'limit-buy':
+      return `buy ${money(intent.usd)} at ${level}`;
+    case 'move': {
+      const t = intent.target;
+      return `move ${t.kind === 'tp' ? `tp${t.index}` : t.kind === 'stop' ? `stop ${t.index}` : t.kind === 'sl' ? 'my stop' : 'my buy'} to ${level}`;
+    }
+    default:
+      return level;
   }
 }
 
@@ -532,6 +563,12 @@ function addTp(i: Sell<'add-tp'>, s: Snap, c: ChatCoin): Step {
     const all = i.sellUsd == null && (i.sellPct == null || i.sellPct >= 100);
     const some = i.sellUsd != null ? money(i.sellUsd) : trimPct(i.sellPct ?? 100);
     const below = !(rel < 1) ? '' : all ? ` To sell it all if it drops there, say "sl at ${typed(i.level)}".` : ` To sell some if it drops there, say "sell ${some} if it drops to ${typed(i.level)}".`;
+    // "sell 10% at 1.2x" on a plan bought lower: 1.2x the entry is already behind — a stop there, or 1.2x from here?
+    if (plan && i.level.kind === 'x' && rel < 1 && i.level.value > 1 && now.mc) {
+      const ahead = formatUsd(now.mc * i.level.value).replace(/^\$/, '').toLowerCase();
+      const how = all ? `"sl at ${typed(i.level)}"` : `"sell ${some} if it drops to ${typed(i.level)}"`;
+      return refuse(`${formatX(i.level.value)} your entry is ${short(trigger, base)} — below where ${sym(c)} is now (${nowText(c)}). A stop there, or ${formatX(i.level.value)} from now? Say ${how} for the stop, or "sell ${some} at ${ahead}" to sell higher.`);
+    }
     return refuse(`${problem} ${sym(c)} is at ${nowText(c)}.${below}`);
   }
   const where = at(trigger, base, now, !!plan);
@@ -564,7 +601,13 @@ function addTp(i: Sell<'add-tp'>, s: Snap, c: ChatCoin): Step {
   const counting = locked.length ? ' (counting what already sold)' : '';
   if (room < 1) return refuse(`Your take-profits on ${sym(c)} already sell 100% of the bag${counting} — lower or remove one first.`);
   const pct = size.pct ?? (editable.length ? Math.min(DEFAULT_TP_PCT, room) : room);
-  if (pct > room + 1e-6) return refuse(`That would sell ${Math.round(used + pct)}% of your ${sym(c)} bag${counting} — there's room for ${trimPct(room)} more.`);
+  if (pct > room + 1e-6) {
+    // "sell all at 3m" with take-profits already set: "all" can only be what they don't sell — offered, never assumed.
+    if (i.sellUsd == null && i.sellPct != null && i.sellPct >= 100) {
+      return refuse(`Your take-profits on ${sym(c)} already sell ${trimPct(used)} of the bag${counting}, so "all" here is the other ${trimPct(room)}. Say "sell ${trimPct(room)} at ${typed(i.level)}" — or remove a take-profit first.`);
+    }
+    return refuse(`That would sell ${Math.round(used + pct)}% of your ${sym(c)} bag${counting} — there's room for ${trimPct(room)} more. Say "sell ${trimPct(room)} at ${typed(i.level)}" for the rest.`);
+  }
   const small = minSellProblem(s, c, pct, plan.origBalance, trigger, base, false, usd);
   if (small) return refuse(small);
   const edit = planEditWith(plan, {});
@@ -589,6 +632,19 @@ function addTp(i: Sell<'add-tp'>, s: Snap, c: ChatCoin): Step {
   return pin(step, i, pct, size.usd);
 }
 
+/**
+ * A stop asked for above the price ("sl 25% at 2x", "sell half if it tanks to 2x"): the order for
+ * each side, the user's own size in both — selling there on the way up, or a stop below now.
+ */
+function aboveNow(i: { sellPct: number | null; sellUsd?: number; level: LevelSpec }, t: Trigger, base: Now, now: Now): string {
+  const rel = fromNow(t, base, now);
+  if (!(rel >= 1 + AT_MARKET)) return '';
+  const size = i.sellUsd != null ? money(i.sellUsd) : i.sellPct != null && i.sellPct < 100 ? sizeWords(i.sellPct) : 'all';
+  // A multiple's mirror below ("2x" up ↔ "drops 50%"), else 20%.
+  const drop = i.level.kind === 'x' && i.level.value > 1 ? Math.min(90, Math.round((1 - 1 / i.level.value) * 100)) : 20;
+  return ` To sell ${size === 'all' ? 'it all' : size} on the way up, say "sell ${size} at ${typed(i.level)}" — for a stop, pick a level below, like "sell ${size} if it drops ${drop}%".`;
+}
+
 /** A partial stop: "sell 10% if it drops to $700K MC" · "sl $2 at 650k". Sized like a take-profit, fires on the way down. */
 function addStop(i: Sell<'add-stop'>, s: Snap, c: ChatCoin): Step {
   const noPrice = needPrice(c);
@@ -599,7 +655,7 @@ function addStop(i: Sell<'add-stop'>, s: Snap, c: ChatCoin): Step {
   const trigger = toTrigger(i.level, base);
   if (!trigger) return refuse('Where should the stop go? Try "sell 10% if it drops to 700k".');
   const problem = stopProblem(trigger, base, now);
-  if (problem) return refuse(`${problem} ${sym(c)} is at ${nowText(c)}.`);
+  if (problem) return refuse(`${problem} ${sym(c)} is at ${nowText(c)}.${aboveNow(i, trigger, base, now)}`);
   const size = sizeAt(i, c, plan ? plan.origBalance : c.balance, trigger, base, i.level);
   if (isReply(size)) return size;
   const pct = size.pct;
@@ -629,7 +685,7 @@ function addStop(i: Sell<'add-stop'>, s: Snap, c: ChatCoin): Step {
   const room = Math.max(0, +(100 - used).toFixed(4));
   const counting = locked.length ? ' (counting what already sold)' : '';
   if (room < 1) return refuse(`Your stops on ${sym(c)} already sell 100% of the bag${counting} — lower or remove one first.`);
-  if (pct > room + 1e-6) return refuse(`Your stops on ${sym(c)} would sell ${Math.round(used + pct)}% of the bag${counting} — there's room for ${trimPct(room)} more.`);
+  if (pct > room + 1e-6) return refuse(`Your stops on ${sym(c)} would sell ${Math.round(used + pct)}% of the bag${counting} — there's room for ${trimPct(room)} more. Say "sell ${trimPct(room)} if it drops to ${typed(i.level)}" for the rest.`);
   const small = minSellProblem(s, c, pct, plan.origBalance, trigger, base, true, usd);
   if (small) return refuse(small);
   // A stop loss at or above this level sells everything first.
@@ -649,6 +705,19 @@ function addStop(i: Sell<'add-stop'>, s: Snap, c: ChatCoin): Step {
   return pin(step, i, pct, size.usd);
 }
 
+/**
+ * "sl at be" / "sl breakeven": the entry. With no plan yet the entry is the price now, so a stop
+ * there would sell at once; on a plan in the red it's above the price. Either way: why, and what to say.
+ */
+function breakevenProblem(level: LevelSpec, trigger: Trigger, base: Now, now: Now, c: ChatCoin, plan: Plan | null): Reply | null {
+  if (!(level.kind === 'x' && level.value === 1)) return null;
+  if (!plan) return refuse(`There's no plan on ${sym(c)} yet, so breakeven is the price now (${nowText(c)}) — a stop there would sell at once. Pick a level below it, like "sl -10%".`);
+  const rel = fromNow(trigger, base, now);
+  if (!Number.isFinite(rel) || rel < 1 - AT_MARKET) return null;
+  if (rel < 1 + AT_MARKET) return refuse(`Breakeven (your entry, ${short(trigger, base)}) is where ${sym(c)} is now — a stop there would sell at once. Pick a level below it, like "sl -10%".`);
+  return refuse(`Breakeven (your entry, ${short(trigger, base)}) is above where ${sym(c)} is now (${nowText(c)}) — a stop has to be below the price. Try "sl -10%".`);
+}
+
 function setSl(i: Of<'set-sl'>, s: Snap, c: ChatCoin): Step {
   const noPrice = needPrice(c);
   if (noPrice) return noPrice;
@@ -657,8 +726,13 @@ function setSl(i: Of<'set-sl'>, s: Snap, c: ChatCoin): Step {
   const base = plan ? entryOf(plan) : now;
   const trigger = toTrigger(i.level, base);
   if (!trigger) return refuse('Where should the stop go? Try "sl at 300k mcap" or "sl -30%".');
+  const be = breakevenProblem(i.level, trigger, base, now, c, plan);
+  if (be) return be;
   const problem = levelProblem(trigger, 'sl', now, base);
-  if (problem) return refuse(`${problem} ${sym(c)} is at ${nowText(c)}.`);
+  if (problem) return refuse(`${problem} ${sym(c)} is at ${nowText(c)}.${aboveNow({ sellPct: null, level: i.level }, trigger, base, now)}`);
+  // The window's rule: a stop loss sells your whole bag, so the bag has to be worth fomo's minimum there.
+  const small = c.balance != null && c.balance > 0 ? minSellProblem(s, c, 100, c.balance, trigger, base, false) : null;
+  if (small) return refuse(small);
   const where = at(trigger, base, now, !!plan);
   if (!plan) return armNew(s, c, { tps: [], sl: { trigger }, trailing: null }, `Set a stop loss on ${sym(c)} at ${where}: if it falls there, I sell all of it.`, 'Set it', `Done! Stop loss on ${sym(c)} at ${short(trigger, base)}.`);
   return moveSl(s, c, plan, trigger, where);
@@ -712,6 +786,8 @@ function move(i: Of<'move'>, s: Snap, c: ChatCoin): Step {
   if (i.target.kind === 'stop') return moveStop(i.target.index, s, c, plan, trigger, where);
   if (i.target.kind === 'sl') {
     if (!plan.sl) return refuse(`You don't have a stop loss on ${sym(c)} — ${plan.stops.some(isEditableStop) ? 'to move a partial stop, say "move stop 1 to …"' : 'say "sl at 300k" to set one'}.`);
+    const be = breakevenProblem(i.level, trigger, base, now, c, plan);
+    if (be) return be;
     const problem = levelProblem(trigger, 'sl', now, base);
     if (problem) return refuse(`${problem} ${sym(c)} is at ${nowText(c)}.`);
     return moveSl(s, c, plan, trigger, where);
@@ -1145,6 +1221,89 @@ export const HELP = [
   'Add "on CLAUDIA" for a coin you hold or have orders on.',
 ].join('\n');
 
+/** "half", "a quarter", "20%" — a share of your cash in words. */
+const shareWords = (pct: number) => (pct === 50 ? 'half' : pct === 25 ? 'a quarter' : pct === 33 ? 'a third' : `${trimPct(pct)}`);
+
+/**
+ * A buy with no dollar amount ("buy half at 500k", "buy at 600k"): the question, your cash, and an
+ * example amount that fits it — never under fomo's minimum buy, never more than you have.
+ */
+function buyAsk(b: { ask: string; where: string | null; pct?: number }, s: Snap): string | null {
+  if (s.cash == null) return null;
+  const where = b.where ?? 'if it dips 20%';
+  const min = s.coin ? s.minBuyUsd(s.coin.networkId) : 0;
+  const cash = Math.floor(s.cash * 100 + 1e-6) / 100;
+  let head = `${b.ask} You have ${cents(cash)} cash on fomo`;
+  let amount: number;
+  if (b.pct != null && b.pct > 0 && b.pct <= 100) {
+    amount = b.pct >= 100 ? cash : Math.floor(cash * (b.pct === 33 ? 100 / 3 : b.pct) + 1e-6) / 100;
+    if (b.pct < 100) head += ` — ${shareWords(b.pct)} of it is ${cents(amount)}`;
+    if (min > 0 && amount < min) {
+      if (cash >= min) return `${head}, under fomo's ${money(min)} minimum buy. Try "buy ${money(min)} ${where}".`;
+      return `${head}, under fomo's ${money(min)} minimum buy — top up first.`;
+    }
+  } else {
+    if (min > 0 && cash < min) return `${head}, under fomo's ${money(min)} minimum buy — top up first.`;
+    amount = Math.max(min, Math.min(10, Math.floor(cash)));
+  }
+  return `${head}. Try "buy ${money(amount)} ${where}".`;
+}
+
+/**
+ * A question made exact from your plan and the price — still a question, never a card:
+ * which take-profit "cancel the sell at 2x" is, how much of the bag "half of what's left"
+ * or "initials at 1.5m" is, where "70% of the price now" is. null: the parser's hint will do.
+ */
+function askFor(a: AskFor, s: Snap, c: ChatCoin): string | null {
+  if (!c.priceUSD || !(c.priceUSD > 0)) return null;
+  const now = nowOf(c);
+  const plan = livePlan(s.plans, c.key);
+  const base = plan ? entryOf(plan) : now;
+  switch (a.kind) {
+    case 'remove-sell': {
+      const lead = a.negated ? 'I can only place orders, not promise not to sell. ' : '';
+      if (!plan) return `${lead}I'm not guarding ${sym(c)}, so there's no sell to remove.`;
+      const open = [
+        ...plan.tps.map((t, k) => ({ t, ok: isEditableTp(t), name: `tp${k + 1}`, label: `TP${k + 1}`, what: `sell ${trimPct(t.sellPct)} at ${short(t.trigger, base)}` })),
+        ...plan.stops.map((t, k) => ({ t, ok: isEditableStop(t), name: `stop ${k + 1}`, label: `stop ${k + 1}`, what: `sell ${trimPct(t.sellPct)} if it drops to ${short(t.trigger, base)}` })),
+      ].filter((o) => o.ok);
+      const trigger = a.level ? toTrigger(a.level, base) : null;
+      if (trigger) {
+        const hit = open.find((o) => sameLevel(o.t.trigger, trigger, base));
+        if (hit) return `${lead}That's ${hit.label} on ${sym(c)} (${hit.what}) — say "remove ${hit.name}" to remove it.`;
+        if (plan.sl && sameLevel(plan.sl.trigger, trigger, base)) return `${lead}That's your stop loss on ${sym(c)} (${short(plan.sl.trigger, base)}) — say "remove my stop" to remove it.`;
+      }
+      if (!open.length) return `${lead}You have no take-profits or partial stops on ${sym(c)} to remove.`;
+      const none = trigger ? `You have no sell at ${short(trigger, base)} on ${sym(c)}. ` : '';
+      const list = open.slice(0, 5).map((o) => `${o.label} (${o.what})`).join(', ');
+      return `${lead}${none}Yours: ${list}. Say "remove ${open[0].name}" — or the one you mean.`;
+    }
+    case 'part-of-rest': {
+      const lv = plan ? (a.stop ? plan.stops : plan.tps).filter((t) => t.status !== 'cancelled') : [];
+      const used = lv.reduce((sum, t) => sum + t.sellPct, 0);
+      const room = Math.max(0, 100 - used);
+      const pct = +((a.pct * room) / 100).toFixed(1);
+      const where = a.stop ? `if it drops to ${typed(a.level)}` : `at ${typed(a.level)}`;
+      if (!(pct > 0)) return `Your ${a.stop ? 'stops' : 'take-profits'} on ${sym(c)} already sell all of it — there's nothing left to split.`;
+      const already = used > 0 ? ` (your ${a.stop ? 'stops' : 'take-profits'} sell ${trimPct(used)} already)` : '';
+      return `${a.pct === 50 ? 'Half' : `${trimPct(a.pct)}`} of what's left is ${trimPct(pct)} of your ${sym(c)} bag${already} — say "${a.verb} ${trimPct(pct)} ${where}".`;
+    }
+    case 'initials': {
+      const trigger = toTrigger(a.level, base);
+      const x = trigger ? levelX(trigger, base) : NaN;
+      if (!trigger || !Number.isFinite(x)) return null;
+      if (!(x > 1)) return `Your initials only come back above ${plan ? 'your entry' : 'the price now'} (${short({ kind: 'x', value: 1 }, base)}) — pick a level above it, like "take initials at 2x".`;
+      const pct = Math.round(100 / x);
+      return `Your initials at ${short(trigger, base)} are about ${pct}% of your ${sym(c)} bag (${formatX(+x.toFixed(2))} ${plan ? 'your entry' : 'from now'}) — say "sell ${pct}% at ${typed(a.level)}".`;
+    }
+    case 'now-x': {
+      if (!c.mc) return null;
+      const mc = c.mc * a.x;
+      return `${trimPct(a.x * 100)} of where ${sym(c)} is now (${nowText(c)}) is ${formatUsd(mc)} MC — ${trimPct((1 - a.x) * 100)} below. Say "sl at ${formatUsd(mc).replace(/^\$/, '').toLowerCase()}" for a stop there.`;
+    }
+  }
+}
+
 /** A typed price this many times away from the coin's price (either way) is surely not what was meant. */
 const FAR = 50;
 
@@ -1161,16 +1320,55 @@ function mcGuess(n: number, mc: number | null): string | null {
  * far from the coin's is a question, never a level. Market caps, multiples and
  * moves are said unambiguously and pass.
  */
-function farPrice(level: LevelSpec, c: ChatCoin): Reply | null {
+function farPrice(intent: Intent, level: LevelSpec, c: ChatCoin): Reply | null {
   if (level.kind !== 'price' || !c.priceUSD || !(level.value > 0)) return null;
   const r = level.value / c.priceUSD;
   if (r <= FAR && r >= 1 / FAR) return null;
   const asMc = c.mc ? ` — that's ${formatUsd((level.value / c.priceUSD) * c.mc)} MC` : '';
   const away = r > 1 ? `${Math.round(r).toLocaleString('en-US')}x the price now` : `1/${Math.round(1 / r).toLocaleString('en-US')} of the price now`;
   const guess = mcGuess(level.value, c.mc);
-  const meant = guess ? ` Did you mean ${guess} mcap? Then say "${guess}".` : ' Say the level as a market cap with its k or m, like "500k", or as a multiple, like "2x".';
+  const meant = guess ? ` Did you mean ${guess} mcap? Then say "${retyped(intent, guess)}".` : ' Say the level as a market cap with its k or m, like "500k", or as a multiple, like "2x".';
   const said = level.value >= 0.01 ? money(level.value) : formatUsd(level.value);
   return refuse(`${said} as a price${asMc}, ${away} (${sym(c)} is at ${nowText(c)}, ${formatUsd(c.priceUSD)}).${meant}`);
+}
+
+/** "1.5m", "700k", "2b": a market cap the way you'd type it. */
+const mcTyped = (n: number) => formatUsd(n).replace(/^\$/, '').toLowerCase();
+/** How far a market cap is from now, in words: "479x below", "974x above". */
+const farText = (r: number) => (r > 1 ? `${Math.round(r).toLocaleString('en-US')}x above` : `${Math.round(1 / r).toLocaleString('en-US')}x below`);
+
+/**
+ * A market cap more than FAR times from the coin's is surely not what was meant:
+ * "sl at 1k" or "buy at 1500" on a $719K coin (a missing k or m), "sell half at
+ * 700m" (700k with the wrong letter). Asked, never placed:
+ *  - below now: always — a stop or dip buy at −98% can't be the plan;
+ *  - above now, a buy: always — nobody waits for a 50x breakout to buy;
+ *  - above now, a sell: when the same digits one unit smaller sit within ±30% of
+ *    the price now ("700m" → 700k on a $719K coin: the k/m slip). A real moon
+ *    target ("sell 5% at 1b") is placed — the card says how far it is — and any
+ *    level can be said as a multiple ("974x") to skip the question.
+ */
+function farMc(intent: Intent, level: LevelSpec, c: ChatCoin, entryMc: number | null): Reply | null {
+  if (level.kind !== 'mc' || !c.mc || !(level.value > 0)) return null;
+  const r = level.value / c.mc;
+  if (r <= FAR && r >= 1 / FAR) return null;
+  const buy = intent.type === 'limit-buy' || (intent.type === 'move' && intent.target.kind === 'buy');
+  const where = `${formatUsd(level.value)} MC is ${farText(r)} where ${sym(c)} is now (${nowText(c)})`;
+  if (r < 1) {
+    // The k or m it's missing: "1500" → 1.5m, "1k" → 1m.
+    const guess = mcGuess(level.value >= 1000 ? level.value / 1000 : level.value, c.mc);
+    if (guess) return refuse(`${where} — did you mean ${guess}? Say "${retyped(intent, guess)}".`);
+    return refuse(`${where} — that can't be right. Say the market cap with its k or m, like "500k", or a drop, like "-30%".`);
+  }
+  const smaller = level.value / 1000;
+  const near = smaller / c.mc;
+  const slip = near >= 1 / 1.3 && near <= 1.3;
+  if (!buy && !slip) return null;
+  const meant = near >= 1 / 5 && near <= 5 ? ` Did you mean ${mcTyped(smaller)}? Say "${retyped(intent, mcTyped(smaller))}".` : ' Pick a level nearer the price, like "1m" or "+20%".';
+  if (buy) return refuse(`${where} — a breakout buy that far up can't be right.${meant}`);
+  // (On a running plan a multiple is of your entry — the one to say is measured from there.)
+  const x = Math.round(level.value / (entryMc ?? c.mc));
+  return refuse(`${where}.${meant} If you really mean ${formatUsd(level.value)}, say it as a multiple: "${retyped(intent, `${x}x`)}".`);
 }
 
 /** The coin an intent is about; null when it isn't about one coin. */
@@ -1198,13 +1396,14 @@ function build(intent: Intent, s: Snap): Step {
     case 'help':
       return answer(HELP);
     case 'unknown': {
+      // A buy with no dollar amount: your cash and an amount that fits it.
+      const buy = intent.buy ? buyAsk(intent.buy, s) : null;
+      if (buy) return refuse(buy);
+      const exact = intent.ask && c ? askFor(intent.ask, s, c) : null;
+      if (exact) return refuse(exact);
       // The parser's hint usually says what to try; otherwise point at the examples.
       const hint = /\b(try|say|help)\b/i.test(intent.hint) ? intent.hint : `${intent.hint} Say "help" for examples.`;
-      // "buy 20% …": what that share of your cash is, so the dollar answer is easy — never placed for you.
-      const share = intent.cashPct;
-      if (share != null && s.cash != null && share > 0 && share <= 100) {
-        return refuse(`${hint} You have ${cents(s.cash)} cash on fomo — ${share}% of it is ${cents((s.cash * share) / 100)}.`);
-      }
+      if (intent.askCash && s.cash != null) return refuse(`${hint} You have ${cents(s.cash)} cash on fomo.`);
       return refuse(hint);
     }
     case 'setting':
@@ -1219,7 +1418,7 @@ function build(intent: Intent, s: Snap): Step {
   }
   if (!c) return refuse(WHICH_COIN);
   if ('level' in intent) {
-    const far = farPrice(intent.level, c);
+    const far = farPrice(intent, intent.level, c) ?? farMc(intent, intent.level, c, livePlan(s.plans, c.key)?.entry.mc ?? null);
     if (far) return far;
   }
   switch (intent.type) {
@@ -1306,7 +1505,8 @@ async function runStep(intent: Intent, step: Act, coin: ChatCoin | null, ctx: Ch
 export async function planIntent(intent: Intent, ctx: ChatCtx): Promise<ChatPlan> {
   try {
     const spec = coinSpecOf(intent);
-    let coin: ChatCoin | null = null;
+    // A question still knows the coin on screen (its chain's minimum buy, for an example amount).
+    let coin: ChatCoin | null = intent.type === 'unknown' ? ctx.coin : null;
     if (spec) {
       const r = await resolve(spec, intent, ctx);
       if (typeof r === 'string') return { say: r, warn: true };

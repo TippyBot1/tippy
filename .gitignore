@@ -14,3 +14,4 @@ coverage/
 # local tooling and generated store images (./store/render.sh)
 .claude/
 store/out/
+store/upload/

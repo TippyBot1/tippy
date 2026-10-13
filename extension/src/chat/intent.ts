@@ -63,9 +63,29 @@ export type Intent =
   | { type: 'help' }
   /**
    * Couldn't work it out: `hint` says what was missing ("Which level? Try 'at 500k mcap'").
-   * `cashPct`: "buy 20% …" — Tippy buys in dollars, so it asks, and shows what that % of your cash is.
+   * `askCash`: "buy 500 at 500k" — asked whether that's dollars; the reply says how much cash you have.
+   * `buy`: a buy with no dollar amount ("buy 20% at 500k", "buy half", "buy at 600k") — `ask` is the question,
+   * `where` the level as said ("at 600k", "if it dips 20%"), `pct` a share of your cash that was said.
+   * run.ts adds your cash and an example amount that fits it (and fomo's minimum buy); `hint` is the
+   * reply when your cash isn't known.
    */
-  | { type: 'unknown'; hint: string; cashPct?: number };
+  | { type: 'unknown'; hint: string; askCash?: true; buy?: { ask: string; where: string | null; pct?: number }; ask?: AskFor };
+
+/**
+ * A question run.ts can make exact from your plan and the coin's price (`hint` is the
+ * reply when it can't): which order "cancel the sell at 2x" means, how much of the
+ * bag "half of what's left" or "initials at 1.5m" is, where "70% of the price now" is.
+ * Always a question — never an order.
+ */
+export type AskFor =
+  /** "cancel the sell at 2x", "hold off selling at 2x": which take-profit or stop that is. `negated`: said as "don't". */
+  | { kind: 'remove-sell'; level: LevelSpec | null; negated?: true }
+  /** "sell half of what's left at 10x": `pct` of what the take-profits (or stops) don't sell yet. */
+  | { kind: 'part-of-rest'; pct: number; level: LevelSpec; verb: string; stop?: true }
+  /** "take initials at 1.5m": the share of the bag that's worth your entry there. */
+  | { kind: 'initials'; level: LevelSpec }
+  /** "stop loss at 70% of current": a stop at 0.7x the price now. */
+  | { kind: 'now-x'; x: number };
 
 /** What Tippy would do, as a confirm card. `run` is only called when the user taps the button. */
 export interface ChatPlan {

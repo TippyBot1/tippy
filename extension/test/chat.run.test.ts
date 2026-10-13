@@ -350,7 +350,8 @@ describe('partial stops: "sell 10% at 700k" below the price', () => {
     const tp = await plan({ type: 'add-tp', coin: HERE, level: { kind: 'mc', value: 700_000 }, sellPct: 10 }, ctx({ coin: bigHiggs }));
     expect(tp.say).toBe('A take-profit has to be above where it is now. $HIGGS is at $719K MC. To sell some if it drops there, say "sell 10% if it drops to 700k".');
     const st = await plan({ type: 'add-stop', coin: HERE, level: { kind: 'mc', value: 800_000 }, sellPct: 10 }, ctx({ coin: bigHiggs }));
-    expect(st.say).toBe('A stop has to be below where it is now. $HIGGS is at $719K MC.');
+    // (With what to say for either side, in the user's own size — never just "has to be below".)
+    expect(st.say).toBe('A stop has to be below where it is now. $HIGGS is at $719K MC. To sell 10% on the way up, say "sell 10% at 800k" — for a stop, pick a level below, like "sell 10% if it drops 20%".');
     expect(st.confirm).toBeUndefined();
   });
 
@@ -445,7 +446,7 @@ describe('partial stops: "sell 10% at 700k" below the price', () => {
     expect(res.ok).toBe(false);
     expect(calls).toEqual([]);
     const explicit = await plan({ type: 'add-stop', coin: HERE, level: { kind: 'mc', value: 700_000 }, sellPct: 10 }, ctx({ coin: bigHiggs }));
-    expect(await explicit.confirm!.run()).toEqual({ ok: false, error: 'A stop has to be below where it is now. $HIGGS is at $690K MC. Nothing was sent.' });
+    expect(await explicit.confirm!.run()).toEqual({ ok: false, error: 'A stop has to be below where it is now. $HIGGS is at $690K MC. To sell 10% on the way up, say "sell 10% at 700k" — for a stop, pick a level below, like "sell 10% if it drops 20%". Nothing was sent.' });
     expect(calls).toEqual([]);
   });
 
@@ -513,7 +514,7 @@ describe('levels Tippy asks about instead of using', () => {
   it('a price ~1000x from the coin\'s is a market cap typed without its k — asked, never placed', async () => {
     const far = await plan({ type: 'add-tp', coin: HERE, level: { kind: 'price', value: 0.7 }, sellPct: 50, anySide: true }, ctx({ coin: higgs }));
     expect(far.confirm).toBeUndefined();
-    expect(far.say).toBe('$0.70 as a price — that\'s $700M MC, 974x the price now ($HIGGS is at $719K MC, $0.000719). Did you mean 700k mcap? Then say "700k".');
+    expect(far.say).toBe('$0.70 as a price — that\'s $700M MC, 974x the price now ($HIGGS is at $719K MC, $0.000719). Did you mean 700k mcap? Then say "sell half at 700k".');
     const sl = await plan({ type: 'set-sl', coin: HERE, level: { kind: 'price', value: 700 } }, ctx({ coin: higgs }));
     expect(sl.confirm).toBeUndefined();
     expect(sl.say).toMatch(/^\$700 as a price — that's \$700B MC/);
@@ -527,11 +528,21 @@ describe('levels Tippy asks about instead of using', () => {
     expect(card.say).toMatch(/^That's where \$HIGGS is now \(\$719K MC\) — I sell at a level, not on the spot/);
   });
 
-  it('"buy 20% …": Tippy buys in dollars — it asks, showing what that share of your cash is', async () => {
-    const card = await plan({ type: 'unknown', hint: 'How much in dollars? I buy with a $ amount, not a % — try "buy $10 at 500k".', cashPct: 20 }, ctx({ cash: 50 }));
+  it('"buy 20% …": Tippy buys in dollars — it asks, showing what that share of your cash is, with an amount to copy', async () => {
+    const ask = 'How much in dollars? I buy with a $ amount, not a share of your cash.';
+    const twenty = { type: 'unknown', hint: `${ask} Try "buy $10 at 500k".`, buy: { ask, where: 'at 500k', pct: 20 } } as const;
+    const card = await plan(twenty, ctx({ cash: 50 }));
     expect(card.confirm).toBeUndefined();
-    expect(card.say).toBe('How much in dollars? I buy with a $ amount, not a % — try "buy $10 at 500k". You have $50 cash on fomo — 20% of it is $10.');
-    expect((await plan({ type: 'unknown', hint: 'How much in dollars?', cashPct: 20 }, ctx({ cash: null }))).say).not.toMatch(/cash on fomo/);
+    expect(card.say).toBe(`${ask} You have $50 cash on fomo — 20% of it is $10. Try "buy $10 at 500k".`);
+    // Under fomo's minimum buy: says so, and the example is the minimum.
+    expect((await plan(twenty, ctx({ cash: 5.27 }))).say).toBe(`${ask} You have $5.27 cash on fomo — 20% of it is $1.05, under fomo's $2 minimum buy. Try "buy $2 at 500k".`);
+    // Not even the minimum: top up first — never an example you can't afford.
+    expect((await plan(twenty, ctx({ cash: 1.5 }))).say).toBe(`${ask} You have $1.50 cash on fomo — 20% of it is $0.30, under fomo's $2 minimum buy — top up first.`);
+    // No amount at all: an example that fits your cash.
+    const none = { type: 'unknown', hint: 'How much should I buy at $500K MC? Try "buy $10 at 500k".', buy: { ask: 'How much should I buy at $500K MC?', where: 'at 500k' } } as const;
+    expect((await plan(none, ctx({ cash: 5.27 }))).say).toBe('How much should I buy at $500K MC? You have $5.27 cash on fomo. Try "buy $5 at 500k".');
+    // Cash unknown: the parser's own words.
+    expect((await plan(twenty, ctx({ cash: null }))).say).toBe(twenty.hint);
   });
 });
 
