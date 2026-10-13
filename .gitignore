@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.output/
+.wxt/
+.wrangler/
+.dev.vars
+*.zip
+*.crx
+*.pem
+coverage/
+.DS_Store
+.harness-dist/
+
+# local tooling and generated store images (./store/render.sh)
+.claude/
+store/out/

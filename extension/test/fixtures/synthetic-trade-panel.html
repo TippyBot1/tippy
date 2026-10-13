@@ -1,0 +1,31 @@
+<!--
+  SYNTHETIC fixture — NOT captured from fomo. It mimics a typical React trade
+  panel (Radix-style tabs, % presets, Max, amount input, ack checkbox, confirm)
+  so the step machine can be tested before recon. Replace/add real captures in
+  this folder during recon (see docs/RECON.md).
+-->
+<div id="app">
+  <header><a href="/discover">Discover</a></header>
+  <main>
+    <section class="token-header"><h1>dogwifhat</h1><span>$WIF</span></section>
+    <aside class="trade">
+      <div role="tablist">
+        <button role="tab" id="tab-buy" aria-selected="true" data-state="active">Buy</button>
+        <button role="tab" id="tab-sell" aria-selected="false" data-state="inactive">Sell</button>
+      </div>
+      <div class="amount">
+        <input id="amount" inputmode="decimal" type="text" value="" placeholder="$0" />
+        <span class="available">$120.50 available</span>
+      </div>
+      <div class="presets">
+        <button class="preset">25%</button>
+        <button class="preset">50%</button>
+        <button class="preset">75%</button>
+        <button class="preset" id="max">Max</button>
+      </div>
+      <div class="quote" id="quote"></div>
+      <label class="ack" id="ack-row" style="display:none"><input type="checkbox" id="ack" /> I understand this token is high risk</label>
+      <button id="confirm" disabled>Sell $WIF</button>
+    </aside>
+  </main>
+</div>

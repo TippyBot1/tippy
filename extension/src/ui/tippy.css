@@ -1,0 +1,548 @@
+/* Tippy UI — shared by the in-page card, popup, options, welcome and the site demo.
+   Soft & friendly: mint accent, rounded everything, calm dark default. */
+
+.tippy,
+:host {
+  /* Tippy mint on a dark trading-terminal base (GMGN / Axiom feel). */
+  --t-mint: #5ee6b5;
+  --t-mint-deep: #2bb98a;
+  --t-mint-soft: rgba(94, 230, 181, 0.12);
+  --t-screen: #143b31;
+  --t-ink: #0b1f18;
+  --t-ink-soft: #7d9c92;
+  --t-gold: #ffd166;
+  --t-amber: #ffb547;
+  --t-pink: #ff8fab;
+  --t-sleep: #8aa39b;
+  --t-red: #ff5d73;
+
+  --t-bg: #0a0c0e;
+  --t-surface: #111417;
+  --t-surface-2: #181c20;
+  --t-surface-3: #1f2429;
+  --t-line: #23292f;
+  --t-line-2: #2e353c;
+  --t-text: #e8ecef;
+  --t-muted: #7e8994;
+  --t-up: #2fe0a0;
+  --t-down: #ff5d73;
+  --t-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --t-radius: 14px;
+  --t-font: 'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --t-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+.tippy {
+  font-family: var(--t-font);
+  color: var(--t-text);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+.tippy *,
+.tippy *::before,
+.tippy *::after {
+  box-sizing: border-box;
+}
+.tippy button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.tippy button:focus-visible,
+.tippy input:focus-visible,
+.tippy select:focus-visible {
+  outline: 2px solid var(--t-mint);
+  outline-offset: 2px;
+}
+
+/* ---------- mascot animations ---------- */
+.tippy-mascot {
+  overflow: visible;
+  flex: none;
+}
+.tippy-mascot .tm-bob {
+  transform-origin: 60px 110px;
+}
+.tippy-mascot.mood-watching .tm-pupils,
+.tippy-mascot.mood-selling .tm-pupils {
+  animation: tm-scan 3.2s ease-in-out infinite;
+}
+.tippy-mascot .tm-eyes {
+  transform-origin: 60px 61px;
+  animation: tm-blink 5s infinite;
+}
+.tippy-mascot.mood-happy .tm-bob {
+  animation: tm-bounce 0.9s ease-in-out infinite;
+}
+.tippy-mascot.mood-happy .tm-arm-l {
+  transform-origin: 22px 67px;
+  animation: tm-wave-l 0.9s ease-in-out infinite;
+}
+.tippy-mascot.mood-happy .tm-arm-r {
+  transform-origin: 98px 67px;
+  animation: tm-wave-r 0.9s ease-in-out infinite;
+}
+.tippy-mascot.mood-selling .tm-bob {
+  animation: tm-bounce 0.6s ease-in-out infinite;
+}
+.tippy-mascot.mood-worried .tm-bob {
+  animation: tm-shiver 0.4s linear infinite;
+}
+.tippy-mascot.mood-sleeping .tm-bob {
+  animation: tm-breathe 3.5s ease-in-out infinite;
+}
+.tippy-mascot.mood-sleeping .tm-zzz {
+  animation: tm-float 2.6s ease-in-out infinite;
+}
+.tippy-mascot .tm-light {
+  animation: tm-glow 2.4s ease-in-out infinite;
+}
+.tippy-mascot.mood-sleeping .tm-light {
+  animation: none;
+  opacity: 0.5;
+}
+.tippy-mascot .tm-sparkle {
+  animation: tm-twinkle 1.2s ease-in-out infinite;
+}
+.tippy-mascot .tm-wand-star {
+  transform-origin: 113px 42px;
+  animation: tm-twinkle 2.2s ease-in-out infinite;
+}
+.tippy-mascot.mood-selling .tm-wand-star,
+.tippy-mascot.mood-happy .tm-wand-star {
+  animation-duration: 0.7s;
+}
+@keyframes tm-scan {
+  0%, 18% { transform: translateX(0); }
+  30%, 48% { transform: translateX(-3px); }
+  62%, 80% { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+@keyframes tm-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes tm-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes tm-wave-l {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(35deg); }
+}
+@keyframes tm-wave-r {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-35deg); }
+}
+@keyframes tm-shiver {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+@keyframes tm-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+@keyframes tm-float {
+  0% { transform: translateY(4px); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateY(-8px); opacity: 0; }
+}
+@keyframes tm-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes tm-twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tippy-mascot * {
+    animation: none !important;
+  }
+}
+
+/* ---------- card shell ---------- */
+.t-card {
+  background: var(--t-surface);
+  border: 1px solid var(--t-line);
+  border-radius: 22px;
+  box-shadow: var(--t-shadow);
+  overflow: hidden;
+  width: 100%;
+}
+.t-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--t-line);
+}
+.t-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.t-head p {
+  margin: 1px 0 0;
+  color: var(--t-muted);
+  font-size: 12.5px;
+}
+.t-head .t-grow {
+  flex: 1;
+  min-width: 0;
+}
+
+/* token strip */
+
+/* presets */
+
+/* sentence rows */
+.t-section-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--t-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.t-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  white-space: nowrap;
+  border-radius: 14px;
+  background: var(--t-surface-2);
+  font-weight: 600;
+}
+@media (max-width: 420px) {
+  .t-row {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+}
+
+.t-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--t-surface);
+  border: 1.5px solid var(--t-line);
+  border-radius: 10px;
+  padding: 0 6px;
+  height: 30px;
+  flex: none;
+}
+.t-pill:focus-within {
+  border-color: var(--t-mint);
+}
+.t-pill input {
+  border: 0;
+  background: transparent;
+  color: var(--t-text);
+  font: inherit;
+  font-weight: 800;
+  width: 34px;
+  text-align: right;
+  outline: none;
+  padding: 0;
+}
+
+.t-pill span {
+  color: var(--t-muted);
+  font-weight: 700;
+  margin-left: 2px;
+}
+.t-row .t-x {
+  margin-left: auto;
+}
+.t-x {
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: var(--t-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+.t-x:hover {
+  background: var(--t-surface);
+  color: var(--t-text);
+}
+.t-link {
+  border: 0;
+  background: none;
+  color: var(--t-mint);
+  font-weight: 800;
+  padding: 0;
+  font-size: 12.5px;
+}
+.t-link:hover {
+  text-decoration: underline;
+}
+
+/* toggle */
+.t-switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: none;
+  border: 0;
+  border-radius: 99px;
+  background: var(--t-line);
+  transition: background 0.15s;
+  padding: 0;
+}
+.t-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.t-switch[aria-checked='true'] {
+  background: var(--t-mint-deep);
+}
+.t-switch[aria-checked='true']::after {
+  transform: translateX(16px);
+}
+
+/* buttons */
+.t-btn {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: 800;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.1s, filter 0.15s;
+}
+.t-btn:active {
+  transform: scale(0.98);
+}
+.t-btn-primary {
+  background: var(--t-mint);
+  color: var(--t-ink);
+  width: 100%;
+  box-shadow: 0 6px 18px rgba(94, 230, 181, 0.25);
+}
+.t-btn-primary:hover {
+  filter: brightness(1.05);
+}
+.t-btn-primary[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.t-btn-ghost {
+  background: var(--t-surface-2);
+  color: var(--t-text);
+}
+.t-btn-danger {
+  background: transparent;
+  color: var(--t-down);
+}
+
+/* speech bubble from Tippy */
+
+/* ladder bar */
+.t-ladder {
+  position: relative;
+  height: 62px;
+  margin: 4px 14px 0;
+}
+.t-ladder .t-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 24px;
+  height: 6px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--t-down) 0%, var(--t-surface-2) 30%, var(--t-surface-2) 70%, var(--t-up) 100%);
+  opacity: 0.6;
+}
+.t-ladder .t-mark {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  font-size: 10.5px;
+  line-height: 15px;
+  font-weight: 800;
+  color: var(--t-muted);
+  white-space: nowrap;
+}
+/* label (15px) + 6px gap + 12px dot → dot centred on the track at 27px */
+.t-ladder .t-mark i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 6px;
+  border: 2px solid var(--t-surface);
+}
+.t-ladder .t-mark.t-now {
+  z-index: 2;
+  color: var(--t-text);
+}
+.t-ladder .t-mark.t-now i {
+  width: 16px;
+  height: 16px;
+  margin: 19px 0 3px;
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--t-mint-soft);
+}
+.t-ladder .t-mark.t-done i {
+  background: var(--t-muted) !important;
+}
+
+/* plan list */
+.t-list {
+  display: grid;
+  gap: 8px;
+}
+.t-plan {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--t-surface-2);
+  align-items: center;
+}
+.t-plan b {
+  font-weight: 800;
+}
+.t-plan .t-meta {
+  font-size: 12px;
+  color: var(--t-muted);
+  grid-column: 1;
+}
+.t-plan .t-xnow {
+  font-weight: 900;
+  font-size: 15px;
+  text-align: right;
+}
+.t-plan .t-actions {
+  grid-column: 2;
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.t-up {
+  color: var(--t-up);
+}
+.t-down {
+  color: var(--t-down);
+}
+.t-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--t-surface);
+  color: var(--t-muted);
+}
+.t-chip.t-ok {
+  color: var(--t-up);
+  background: var(--t-mint-soft);
+}
+.t-chip.t-warn {
+  color: var(--t-amber);
+  background: rgba(255, 173, 92, 0.12);
+}
+.t-chip.t-buy {
+  color: var(--t-up);
+  background: rgba(47, 224, 160, 0.12);
+}
+/* a limit buy Tippy isn't sure about: "It bought" / "It didn't buy" */
+.t-plan .t-resolve {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+.t-resolve .t-hint {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  color: var(--t-muted);
+}
+/* two classes deep: `.tippy button { font: inherit }` would win over one */
+.t-resolve .t-mini {
+  min-height: 30px;
+  padding: 3px 8px;
+  border: 1px solid var(--t-line);
+  border-radius: 10px;
+  background: var(--t-surface);
+  font-weight: 800;
+  font-size: 12.5px;
+  line-height: 1.2;
+}
+.t-resolve .t-mini:hover {
+  background: var(--t-surface-3);
+}
+.t-resolve .t-mini[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* why a button has to wait — "(wait 1:20)", "(selling…)" — on its own line under the label */
+.t-wait {
+  display: block;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--t-muted);
+  white-space: nowrap;
+}
+
+.t-empty {
+  text-align: center;
+  color: var(--t-muted);
+  padding: 8px 6px 4px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.t-banner {
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255, 173, 92, 0.14);
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+/* ---------- floating bubble (content script) ---------- */
+
+@keyframes t-pop {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.t-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483001;
+  background: rgba(10, 18, 16, 0.55);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+}
+.t-overlay .t-card {
+  width: min(360px, calc(100vw - 32px));
+}

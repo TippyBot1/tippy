@@ -1,0 +1,176 @@
+/* Extension pages (popup / options / welcome). */
+html,
+body {
+  margin: 0;
+  background: #0a0c0e;
+  color-scheme: dark;
+}
+.t-page {
+  min-height: 100vh;
+  background: var(--t-bg);
+  color: var(--t-text);
+}
+.t-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  display: grid;
+  gap: 18px;
+}
+.t-hero {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.t-hero h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.t-hero p {
+  margin: 4px 0 0;
+  color: var(--t-muted);
+}
+.t-panel {
+  background: var(--t-surface);
+  border: 1px solid var(--t-line);
+  border-radius: 20px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+.t-panel h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+.t-panel > p,
+.t-help {
+  margin: 0;
+  color: var(--t-muted);
+  font-size: 13px;
+}
+.t-setting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+.t-setting > div {
+  display: grid;
+  gap: 2px;
+}
+.t-setting b {
+  font-weight: 700;
+}
+.t-setting small {
+  color: var(--t-muted);
+  font-size: 12.5px;
+}
+.t-seg {
+  display: inline-flex;
+  background: var(--t-surface-2);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+}
+.t-seg button {
+  border: 0;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--t-muted);
+}
+.t-seg button[aria-pressed='true'] {
+  background: var(--t-surface);
+  color: var(--t-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.t-step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.t-step-n {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  background: var(--t-surface-2);
+  color: var(--t-muted);
+}
+.t-step.t-done .t-step-n {
+  background: var(--t-mint);
+  color: var(--t-ink);
+}
+.t-step h3 {
+  margin: 4px 0 4px;
+  font-size: 15px;
+}
+.t-step p {
+  margin: 0 0 10px;
+  color: var(--t-muted);
+  font-size: 13.5px;
+}
+.t-step .t-btn {
+  width: auto;
+}
+.t-promise {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--t-mint-soft);
+  font-weight: 700;
+}
+.t-popup {
+  width: 360px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.t-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+.t-foot a {
+  color: var(--t-muted);
+  text-decoration: none;
+  font-weight: 700;
+}
+.t-foot a:hover {
+  color: var(--t-text);
+}
+.t-preset-edit {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--t-surface-2);
+}
+.t-preset-edit .t-row {
+  background: var(--t-surface);
+}
+
+/* onboarding checklist ("Keep your orders working") */
+.t-checks {
+  margin: 8px 0 12px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.t-checks .t-btn {
+  margin-left: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+}

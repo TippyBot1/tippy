@@ -1,0 +1,17 @@
+{
+  "name": "tippy",
+  "private": true,
+  "description": "Tippy — a friendly little bot that adds take-profit and stop-loss to fomo.",
+  "workspaces": [
+    "extension",
+    "alerts-worker",
+    "site"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace extension",
+    "dev:ext": "npm run dev --workspace extension",
+    "build:ext": "npm run build --workspace extension",
+    "dev:site": "npm run dev --workspace site",
+    "build:site": "npm run build --workspace site"
+  }
+}

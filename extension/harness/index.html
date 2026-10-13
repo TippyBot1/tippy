@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tippy harness</title>
+    <style>
+      /* A generic dark "trading page" backdrop — not fomo's real UI. */
+      body {
+        margin: 0;
+        background: #08090b;
+        color: #9aa3ad;
+        font: 14px system-ui, sans-serif;
+        min-height: 100vh;
+      }
+      .fake {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 16px;
+        padding: 16px;
+        height: calc(100vh - 32px);
+        box-sizing: border-box;
+      }
+      .box {
+        background: #0f1114;
+        border: 1px solid #1d2126;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .chart {
+        background: linear-gradient(180deg, transparent 60%, rgba(47, 224, 160, 0.06)), repeating-linear-gradient(0deg, #0f1114 0 39px, #15181c 39px 40px);
+      }
+      .note {
+        position: fixed;
+        left: 16px;
+        bottom: 12px;
+        font-size: 12px;
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="fake">
+      <div class="box chart">$BONKLE · pretend chart</div>
+      <div class="box">pretend trade panel</div>
+    </div>
+    <div class="note">Tippy dev harness — mocked data, nothing real.</div>
+    <div id="tippy"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

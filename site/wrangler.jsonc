@@ -1,0 +1,15 @@
+{
+  // tippybot.fun — static site on Cloudflare Workers static assets.
+  "name": "tippybot-site",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  // Needs tippybot.fun to be a zone in this Cloudflare account (nameservers moved
+  // from Porkbun). Wrangler then creates the DNS records and certificates.
+  "routes": [
+    { "pattern": "tippybot.fun", "custom_domain": true },
+    { "pattern": "www.tippybot.fun", "custom_domain": true }
+  ]
+}

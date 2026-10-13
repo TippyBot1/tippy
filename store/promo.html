@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tippy promo tile</title>
+    <style>
+      /* Chrome Web Store promo tiles: ?size=small (440×280) or ?size=marquee (1400×560). */
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: #e9eef2;
+      }
+      body {
+        background: radial-gradient(70% 90% at 25% 50%, rgba(94, 230, 181, 0.18), transparent 70%), linear-gradient(135deg, #0d1013, #08090b);
+      }
+      .tile {
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+      }
+      .tile img {
+        flex: none;
+      }
+      .name {
+        font-weight: 850;
+        letter-spacing: -0.02em;
+      }
+      .line {
+        color: #b8c2cb;
+        font-weight: 600;
+      }
+      .line b {
+        color: #5ee6b5;
+      }
+      .tags {
+        color: #7e8994;
+        font-weight: 600;
+      }
+      .small {
+        width: 440px;
+        height: 280px;
+        padding: 0 28px;
+        gap: 18px;
+      }
+      .small img {
+        width: 130px;
+        height: 130px;
+      }
+      .small .name {
+        font-size: 46px;
+      }
+      .small .line {
+        font-size: 19px;
+        line-height: 1.3;
+        margin-top: 4px;
+      }
+      .small .tags {
+        font-size: 13px;
+        margin-top: 12px;
+      }
+      .marquee {
+        width: 1400px;
+        height: 560px;
+        padding: 0 110px;
+        gap: 56px;
+      }
+      .marquee img {
+        width: 320px;
+        height: 320px;
+      }
+      .marquee .name {
+        font-size: 110px;
+      }
+      .marquee .line {
+        font-size: 42px;
+        line-height: 1.25;
+        margin-top: 8px;
+      }
+      .marquee .tags {
+        font-size: 24px;
+        margin-top: 26px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tile" id="t">
+      <img src="./tippy-icon.svg" alt="" />
+      <div>
+        <div class="name">Tippy</div>
+        <div class="line"><b>Take profit &amp; stop loss</b><br />for fomo</div>
+        <div class="tags">Free · no keys · one permission</div>
+      </div>
+    </div>
+    <script>
+      const size = new URLSearchParams(location.search).get('size') === 'marquee' ? 'marquee' : 'small';
+      document.getElementById('t').classList.add(size);
+      document.body.style.width = size === 'marquee' ? '1400px' : '440px';
+      document.body.style.height = size === 'marquee' ? '560px' : '280px';
+    </script>
+  </body>
+</html>

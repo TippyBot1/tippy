@@ -1,0 +1,1608 @@
+/* =====================================================================
+   Tippy mini window — compact, dark, draggable "instant panel"
+   ===================================================================== */
+.tw {
+  width: 324px;
+  background: var(--t-surface);
+  border: 1px solid var(--t-line);
+  border-radius: 14px;
+  box-shadow: var(--t-shadow);
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--t-text);
+  animation: tw-open 0.32s cubic-bezier(0.2, 1.25, 0.4, 1) both;
+  font-variant-numeric: tabular-nums;
+  /* never taller than the screen: the body scrolls, header + footer stay put */
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 24px);
+}
+.tw > * {
+  flex: none;
+}
+.tw > .tw-body {
+  flex: 0 1 auto;
+  min-height: 0;
+  grid-auto-rows: max-content; /* rows keep their height and the body scrolls (not squashed) */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--t-line-2) transparent;
+}
+@keyframes tw-open {
+  from { opacity: 0; transform: translateY(14px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+.tw button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.tw button:disabled {
+  cursor: not-allowed;
+}
+.tw-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 8px 0 6px;
+  background: var(--t-bg);
+  border-bottom: 1px solid var(--t-line);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.tw-head:active {
+  cursor: grabbing;
+}
+.tw-grip {
+  color: var(--t-line-2);
+  font-size: 14px;
+  letter-spacing: -2px;
+}
+.tw-title {
+  font-weight: 900;
+  font-size: 13.5px;
+}
+.tw-token {
+  font-weight: 800;
+  font-size: 11.5px;
+  color: var(--t-muted);
+  background: var(--t-surface-2);
+  border-radius: 6px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tw-head-mascot {
+  display: inline-flex;
+  flex: none;
+}
+/* dry run is on: Tippy won't actually buy or sell */
+.tw-dry {
+  flex: none;
+  padding: 2px 5px;
+  border: 1px solid rgba(255, 181, 71, 0.45);
+  border-radius: 5px;
+  background: rgba(255, 181, 71, 0.12);
+  color: var(--t-amber);
+  font: 900 9.5px var(--t-font);
+  letter-spacing: 0.05em;
+}
+.tw-token em {
+  font-style: normal;
+  color: var(--t-text);
+  font-family: var(--t-mono);
+  font-size: 11px;
+}
+.tw-spacer {
+  flex: 1;
+}
+.tw-icon {
+  border: 0;
+  background: transparent;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: var(--t-muted) !important;
+  font-size: 16px;
+  line-height: 1;
+}
+.tw-icon:hover {
+  background: var(--t-surface-2);
+  color: var(--t-text) !important;
+}
+
+/* Buy | Sell — green / red like fomo's own Buy / Sell tabs */
+.tw-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 6px 8px 0;
+}
+.tw-mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  border: 1px solid var(--t-line);
+  background: var(--t-bg);
+  border-radius: 8px;
+  font-weight: 900 !important;
+  font-size: 12.5px !important;
+  color: var(--t-muted) !important;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.tw-mode:hover {
+  color: var(--t-text) !important;
+  background: var(--t-surface-2);
+}
+.tw-mode-sell[aria-selected='true'] {
+  color: var(--t-down) !important;
+  border-color: rgba(255, 93, 115, 0.45);
+  background: rgba(255, 93, 115, 0.1);
+}
+.tw-mode-buy[aria-selected='true'] {
+  color: var(--t-up) !important;
+  border-color: rgba(47, 224, 160, 0.45);
+  background: rgba(47, 224, 160, 0.1);
+}
+.tw-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--t-surface-3);
+  color: var(--t-text);
+  font: 900 10px var(--t-mono);
+}
+.tw-mode-sell[aria-selected='true'] .tw-count {
+  background: var(--t-down);
+  color: #2a0a10;
+}
+.tw-mode-buy[aria-selected='true'] .tw-count {
+  background: var(--t-up);
+  color: var(--t-ink);
+}
+
+/* Tippy speaking (the "looking up this coin…" card) */
+.tw-say {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 2px;
+  min-height: 58px;
+}
+.tw-bubble {
+  position: relative;
+  flex: 1;
+  background: var(--t-surface-3);
+  border: 1px solid var(--t-line-2);
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-weight: 700;
+  font-size: 12.5px;
+  line-height: 1.35;
+  min-height: 34px;
+}
+.tw-bubble::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  margin-top: -5px;
+  border: 5px solid transparent;
+  border-right-color: var(--t-line-2);
+  border-left: 0;
+}
+.tw-bubble-warn {
+  background: rgba(255, 181, 71, 0.1);
+  border-color: rgba(255, 181, 71, 0.35);
+}
+.tw-caret {
+  color: var(--t-mint);
+  animation: tw-caret 0.8s steps(1) infinite;
+}
+@keyframes tw-caret {
+  50% { opacity: 0; }
+}
+.tw-intro .tippy-mascot {
+  animation: tw-popin 0.75s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+.tw-intro .tw-bubble {
+  animation: tw-bubble 0.35s 0.35s ease-out both;
+  transform-origin: left center;
+}
+@keyframes tw-popin {
+  0% { opacity: 0; transform: translateY(36px) scale(0.3) rotate(-18deg); }
+  55% { opacity: 1; transform: translateY(-6px) scale(1.12) rotate(6deg); }
+  75% { transform: translateY(2px) scale(0.97) rotate(-2deg); }
+  100% { transform: none; }
+}
+@keyframes tw-bubble {
+  from { opacity: 0; transform: scale(0.85) translateX(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tw-body {
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* never wider than the window: long lines ellipsize instead */
+  gap: 6px;
+}
+.tw-info {
+  color: var(--t-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: help;
+  text-transform: none;
+}
+.tw-info:hover,
+.tw-info:focus-visible {
+  color: var(--t-text);
+  outline: none;
+}
+.tw-dim {
+  color: var(--t-muted);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ---------- the order form (both tabs) ---------- */
+/* a box: Amount, or the level */
+.tw-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding: 6px 7px 7px;
+  border: 1px solid var(--t-line);
+  border-radius: 10px;
+  background: var(--t-bg);
+}
+.tw-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  min-height: 16px;
+  padding: 0 1px;
+}
+.tw-box-l {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--t-muted);
+}
+.tw-box-r {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t-muted);
+  white-space: nowrap;
+}
+.tw-box-r b {
+  color: var(--t-text);
+  font-family: var(--t-mono);
+}
+.tw-cash.warn,
+.tw-cash.warn b {
+  color: var(--t-amber);
+}
+
+/* Amount: four quick chips + ✎ other */
+.tw-chips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 76px;
+  gap: 4px;
+}
+.tw-chip {
+  height: 28px;
+  min-width: 0;
+  padding: 0 2px;
+  border: 1px solid var(--t-line);
+  background: var(--t-surface-2);
+  border-radius: 7px;
+  color: var(--t-muted) !important;
+  font: 800 12px var(--t-mono);
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
+}
+.tw-chip:hover {
+  border-color: var(--t-line-2);
+  background: var(--t-surface-3);
+  color: var(--t-text) !important;
+}
+.tw-chip:active {
+  transform: scale(0.95);
+}
+.tw-chip.on,
+.tw-custom.on {
+  color: var(--t-text) !important;
+  background: var(--t-surface-3);
+  border-color: rgba(232, 236, 239, 0.55);
+}
+.tw-custom {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--t-line);
+  background: var(--t-surface-2);
+  border-radius: 7px;
+  color: var(--t-muted);
+  font: 700 12px var(--t-mono);
+}
+.tw-custom svg {
+  flex: none;
+}
+.tw-custom:focus-within {
+  border-color: var(--t-mint);
+}
+.tw-custom input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--t-text);
+  font: 800 12px var(--t-mono);
+  outline: none;
+}
+.tw .tw-custom input:focus-visible {
+  outline: none; /* the box's border shows focus */
+}
+.tw-custom input::placeholder {
+  color: var(--t-muted);
+  opacity: 0.75;
+  font-family: var(--t-font);
+  font-weight: 700;
+}
+
+/* The level: MC ⇄ [ 700K ] now $719K, then the −100%…+100% slider and the % box */
+.tw-trig {
+  --fill: var(--t-muted);
+  --fill-soft: rgba(126, 137, 148, 0.18);
+}
+.tw-trig.is-up {
+  --fill: var(--t-up);
+  --fill-soft: rgba(47, 224, 160, 0.16);
+}
+.tw-trig.is-down {
+  --fill: var(--t-down);
+  --fill-soft: rgba(255, 93, 115, 0.16);
+}
+.tw-trig.is-buy {
+  --fill: var(--t-mint);
+  --fill-soft: rgba(94, 230, 181, 0.16);
+}
+.tw-trig-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 8px 0 4px;
+  border: 1px solid var(--t-line);
+  border-radius: 8px;
+  background: var(--t-surface-2);
+  transition: border-color 0.12s;
+}
+.tw-trig-row:focus-within {
+  border-color: var(--fill);
+}
+.tw-trig-row.bad,
+.tw-pctbox.bad {
+  border-color: var(--t-amber);
+}
+.tw .tw-flip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--t-muted);
+  font: 800 11px var(--t-font);
+  white-space: nowrap;
+}
+.tw .tw-flip span {
+  color: var(--t-mint);
+  font-size: 12px;
+}
+.tw .tw-flip:hover {
+  background: var(--t-surface-3);
+  color: var(--t-text);
+}
+.tw .tw-flip:focus-visible {
+  outline: 2px solid var(--t-mint);
+  outline-offset: 0;
+}
+.tw-flip.off {
+  padding-right: 2px;
+}
+.tw-trig-cur {
+  color: var(--t-muted);
+  font: 700 13px var(--t-mono);
+}
+.tw-trig-in {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--t-text);
+  font: 800 14px var(--t-mono);
+  outline: none;
+}
+.tw .tw-trig-in:focus-visible {
+  outline: none; /* the box's border shows focus */
+}
+.tw-trig-in::placeholder,
+.tw-pctbox input::placeholder {
+  color: var(--t-muted);
+  opacity: 0.55;
+}
+.tw-trig-now {
+  flex: none;
+  color: var(--t-muted);
+  font: 700 10.5px var(--t-mono);
+  white-space: nowrap;
+}
+/* right under the level: "−2.6% from now · −1.8% vs your entry ($716K MC)" */
+.tw-means {
+  margin-top: -2px;
+  padding: 0 2px;
+  color: var(--t-muted);
+  font: 700 11px var(--t-font);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+.tw-means .up {
+  color: var(--t-up);
+}
+.tw-means .down {
+  color: var(--t-down);
+}
+.tw-slide-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  gap: 8px;
+  align-items: start;
+}
+.tw-slider {
+  display: grid;
+  gap: 3px;
+  padding: 0 2px;
+}
+.tw-slider input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  margin: 8px 0 3px;
+  padding: 0;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--t-line-2) 0 var(--a, 50%), var(--fill) var(--a, 50%) var(--b, 50%), var(--t-line-2) var(--b, 50%) 100%);
+  outline: none;
+  cursor: pointer;
+}
+.tw-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--fill);
+  border: 3px solid var(--t-bg);
+  box-shadow: 0 0 0 1px var(--fill), 0 0 0 5px var(--fill-soft);
+  cursor: grab;
+  transition: transform 0.08s;
+}
+.tw-slider input[type='range']::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--fill);
+  border: 3px solid var(--t-bg);
+  box-shadow: 0 0 0 1px var(--fill), 0 0 0 5px var(--fill-soft);
+  cursor: grab;
+}
+.tw-slider input[type='range']:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.12);
+}
+.tw-slider input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px var(--fill), 0 0 0 5px var(--fill-soft), 0 0 0 7px var(--t-mint);
+}
+.tw-slider input[type='range']:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tw-ticks {
+  display: flex;
+  justify-content: space-between;
+  color: var(--t-muted);
+  font: 600 9.5px var(--t-mono);
+  opacity: 0.85;
+  user-select: none;
+}
+.tw-ticks span:nth-child(3) {
+  color: var(--t-text);
+}
+.tw-pctbox {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid var(--t-line);
+  border-radius: 7px;
+  background: var(--t-surface-2);
+  color: var(--t-muted);
+  font: 700 12px var(--t-mono);
+  transition: border-color 0.12s;
+}
+.tw-pctbox:focus-within {
+  border-color: var(--fill);
+}
+.tw-pctbox input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fill);
+  font: 800 12.5px var(--t-mono);
+  text-align: right;
+  outline: none;
+}
+.tw-trig:not(.is-up):not(.is-down):not(.is-buy) .tw-pctbox input {
+  color: var(--t-text);
+}
+.tw .tw-pctbox input:focus-visible {
+  outline: none;
+}
+
+/* Tippy's line above the main button (two lines at most: the level must always show) */
+.tw-sum {
+  margin-top: 1px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--t-text);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.tw-sum.hint {
+  color: var(--t-muted);
+  font-weight: 600;
+  white-space: normal;
+}
+.tw-sum.warn {
+  color: var(--t-amber);
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.tw-sum.ok {
+  color: var(--t-up);
+  white-space: normal;
+}
+.tw-warn-line {
+  margin-top: -2px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--t-amber);
+}
+/* a heads-up that doesn't stop the button (a partial stop under the stop loss) */
+.tw-warn-line.tw-heads {
+  font-weight: 600;
+}
+
+/* the big button: mint for take profits and buys, red for stops */
+.tw-arm {
+  margin-top: 1px;
+  height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--t-mint);
+  color: var(--t-ink) !important;
+  font-weight: 900;
+  font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 6px 20px rgba(94, 230, 181, 0.22);
+  transition: filter 0.12s, transform 0.08s, background 0.15s;
+}
+.tw-arm.is-down {
+  background: var(--t-down);
+  color: #fff !important;
+  box-shadow: 0 6px 20px rgba(255, 93, 115, 0.24);
+}
+.tw-arm:hover {
+  filter: brightness(1.06);
+}
+.tw-arm:active {
+  transform: scale(0.98);
+}
+.tw-arm[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.tw-arm:not(.is-up):not(.is-down):not(.is-buy)[disabled] {
+  background: var(--t-surface-3);
+  color: var(--t-muted) !important;
+  opacity: 1;
+}
+.tw-btn {
+  height: 32px;
+  border: 1px solid var(--t-line);
+  background: var(--t-surface-2);
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 12px;
+}
+.tw-btn:hover {
+  background: var(--t-surface-3);
+}
+.tw-btn[disabled] {
+  opacity: 0.5;
+}
+.tw-btn[disabled]:hover {
+  background: var(--t-surface-2);
+}
+.tw-btn-sm {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 11.5px;
+}
+.tw-btn-danger {
+  color: var(--t-down) !important;
+}
+.tw-btn-sell {
+  background: var(--t-down);
+  border-color: var(--t-down);
+  color: #fff !important;
+}
+.tw-btn-sell:hover {
+  background: var(--t-down);
+  filter: brightness(1.06);
+}
+.tw-text-btn {
+  border: 0;
+  background: none;
+  color: var(--t-muted) !important;
+  font-weight: 700;
+  font-size: 12px;
+}
+.tw-text-btn:hover:not(:disabled) {
+  color: var(--t-text) !important;
+}
+.tw-text-mint {
+  color: var(--t-mint) !important;
+}
+.tw-cancel {
+  justify-self: center;
+  margin-top: -2px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+}
+.tw-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+/* one-line chip rows: Protect with · Expires · Trailing stop */
+.tw-optrow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tw-optl,
+.tw-quick .tw-optl {
+  flex: none;
+  width: 84px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--t-muted);
+  white-space: nowrap;
+}
+.tw-opt {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--t-line);
+  background: var(--t-surface-2);
+  border-radius: 7px;
+  color: var(--t-muted) !important;
+  font: 800 11px var(--t-font);
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.tw-opt:hover:not(:disabled) {
+  color: var(--t-text) !important;
+  border-color: var(--t-line-2);
+}
+.tw-opt[aria-pressed='true'] {
+  color: var(--t-text) !important;
+  border-color: var(--t-mint);
+  background: var(--t-mint-soft);
+}
+.tw-opt.is-down[aria-pressed='true'] {
+  border-color: var(--t-down);
+  background: rgba(255, 93, 115, 0.12);
+}
+.tw-opt:disabled {
+  opacity: 0.5;
+}
+.tw-sub {
+  margin-top: -3px;
+  padding-left: 88px;
+  font: 600 10.5px var(--t-mono);
+  color: var(--t-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* a running plan on this coin guards the new coins: no preset chips */
+.tw-covered {
+  padding: 6px 8px;
+  border: 1px solid var(--t-line);
+  border-radius: 8px;
+  background: var(--t-bg);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.tw-covered b {
+  font: 700 11px var(--t-mono);
+  color: var(--t-up);
+}
+.tw-guard-note {
+  margin-top: -3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--t-muted);
+}
+
+/* ---------- Your orders / Your buys: one row style, like a price ladder ---------- */
+.tw-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 1px solid var(--t-line);
+  border-radius: 10px;
+  background: var(--t-bg);
+  overflow: hidden;
+  margin-top: 2px;
+}
+.tw-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--t-muted);
+}
+.tw-list-head .tw-status {
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tw-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 3px 6px 3px 8px;
+  border-top: 1px solid var(--t-line);
+  font-size: 12px;
+  white-space: nowrap;
+  --tone: var(--t-muted);
+}
+.tw-row.is-up {
+  --tone: var(--t-up);
+}
+.tw-row.is-down {
+  --tone: var(--t-down);
+}
+.tw-row.is-buy {
+  --tone: var(--t-mint);
+}
+.tw-arrow {
+  flex: none;
+  width: 10px;
+  color: var(--tone);
+  font-size: 9px;
+  line-height: 1;
+}
+.tw-row-lvl {
+  flex: none;
+  font: 800 12px var(--t-mono);
+  color: var(--t-text);
+}
+.tw-row-move {
+  flex: none;
+  font: 700 11px var(--t-mono);
+  color: var(--tone);
+}
+.tw-row-what {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--t-muted);
+  font-weight: 700;
+  font-size: 11.5px;
+}
+.tw-row.tw-done {
+  opacity: 0.55;
+}
+.tw-row.tw-editing {
+  background: rgba(94, 230, 181, 0.06);
+  box-shadow: inset 2px 0 0 var(--t-mint);
+}
+.tw-row-btn,
+.tw-x {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--t-muted) !important;
+  font-size: 14px;
+}
+.tw-row-btn:hover:not(:disabled),
+.tw-row-btn.on {
+  background: var(--t-surface-3);
+  color: var(--t-mint) !important;
+}
+.tw-x:hover:not(:disabled) {
+  background: var(--t-surface-3);
+  color: var(--t-down) !important;
+}
+.tw-row-btn:disabled,
+.tw-x:disabled {
+  opacity: 0.35;
+}
+.tw-status {
+  flex: none;
+  font-weight: 800;
+  font-size: 10.5px;
+  color: var(--t-muted);
+  background: var(--t-surface-2);
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+.tw-status.ok {
+  color: var(--t-up);
+  background: rgba(47, 224, 160, 0.12);
+}
+.tw-status.warn {
+  color: var(--t-amber);
+  background: rgba(255, 181, 71, 0.12);
+}
+.tw-status.bad {
+  color: var(--t-down);
+  background: rgba(255, 93, 115, 0.12);
+}
+/* the "now $719K" line between the take profits and the stops */
+.tw-nowline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 8px;
+  border-top: 1px solid var(--t-line);
+  color: var(--t-text);
+  font: 800 10px var(--t-mono);
+}
+.tw-nowline::before,
+.tw-nowline::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--t-line-2);
+}
+.tw-nowline span {
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--t-surface-3);
+}
+.tw-nowline + .tw-row {
+  border-top: 0;
+}
+/* an order that needs the trader */
+.tw-attn {
+  padding: 0 8px 7px 23px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--t-amber);
+}
+.tw-attn.tw-attn-done {
+  color: var(--t-muted);
+}
+.tw-resolve {
+  display: grid;
+  padding: 0 8px 8px;
+}
+.tw-row2.tw-resolve {
+  grid-template-columns: 1fr 1fr;
+}
+.tw-resolve .tw-btn {
+  height: auto;
+  min-height: 28px;
+  padding: 3px 6px;
+  line-height: 1.2;
+}
+.tw-resolve-hint {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--t-muted);
+}
+
+/* ---------- the running plan, inside "Your orders" ---------- */
+/* what an order needs from you (Retry, "sell now?"), right under its row */
+.tw-row-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 0 6px 6px 23px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--t-amber);
+}
+.tw-row-note span {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+.tw-row-note .tw-btn-sm {
+  height: 24px;
+}
+.tw-row-note.tw-attn-plan {
+  padding: 6px 8px;
+  border-top: 1px solid var(--t-line);
+}
+/* Guarding $HIGGS · 1.01x · +1.0%   ❚❚ Pause  ■ Stop all */
+.tw-planline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 2px 4px 2px 8px;
+  border-top: 1px solid var(--t-line);
+  background: var(--t-surface);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.tw-planline-txt {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--t-muted);
+  font-weight: 700;
+}
+.tw-planline-txt b {
+  font-family: var(--t-mono);
+}
+.tw-planline-txt .up {
+  color: var(--t-up);
+}
+.tw-planline-txt .down {
+  color: var(--t-down);
+}
+.tw .tw-plan-btn {
+  flex: none;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid var(--t-line);
+  border-radius: 6px;
+  background: var(--t-surface-2);
+  color: var(--t-muted);
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.tw .tw-plan-btn:hover:not(:disabled) {
+  color: var(--t-text);
+  border-color: var(--t-line-2);
+}
+.tw .tw-plan-stop:hover:not(:disabled) {
+  color: var(--t-down);
+}
+.tw-plan-btn:disabled {
+  opacity: 0.5;
+}
+.tw-quick {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tw-quick .tw-optl {
+  width: auto;
+  margin-right: 2px;
+}
+.tw-qchip {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--t-line);
+  background: var(--t-surface-2);
+  border-radius: 99px;
+  color: var(--t-muted) !important;
+  font: 800 10.5px var(--t-font);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.12s, color 0.12s;
+}
+.tw-qchip b {
+  color: var(--t-mint);
+  font: 800 10px var(--t-mono);
+}
+.tw-qchip:hover:not(:disabled) {
+  color: var(--t-text) !important;
+  border-color: var(--t-line-2);
+}
+.tw-qchip:disabled {
+  opacity: 0.5;
+}
+/* Activity: closed until you open it */
+.tw-activity {
+  font-size: 11px;
+  color: var(--t-muted);
+}
+.tw-activity summary {
+  width: max-content;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  user-select: none;
+}
+.tw-activity summary:hover {
+  color: var(--t-text);
+}
+.tw-activity[open] summary {
+  margin-bottom: 3px;
+}
+.tw-activity div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+
+/* footer */
+.tw-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-top: 1px solid var(--t-line);
+  background: var(--t-bg);
+  font-size: 11.5px;
+  color: var(--t-muted);
+  font-weight: 700;
+}
+.tw-stat b {
+  color: var(--t-text);
+  font-family: var(--t-mono);
+}
+.tw-pill {
+  white-space: nowrap;
+  border: 1px solid var(--t-line);
+  background: var(--t-surface-2);
+  border-radius: 99px;
+  padding: 2px 8px;
+  font-weight: 800;
+  font-size: 11px;
+  color: var(--t-muted) !important;
+}
+.tw-pill.on {
+  border-color: var(--t-mint);
+  color: var(--t-mint) !important;
+  background: var(--t-mint-soft);
+}
+.tw-pill.on.warn {
+  border-color: var(--t-amber);
+  color: var(--t-amber) !important;
+  background: rgba(255, 181, 71, 0.12);
+}
+
+/* minimised pill */
+.tw-pillbar {
+  touch-action: none;
+  animation: tw-open 0.3s cubic-bezier(0.2, 1.25, 0.4, 1) both;
+}
+.tw-pillbtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px 0 8px;
+  border-radius: 99px;
+  border: 1px solid var(--t-line-2);
+  background: var(--t-surface);
+  box-shadow: var(--t-shadow);
+  color: var(--t-text) !important;
+  font: inherit;
+  cursor: pointer;
+}
+.tw-pillbtn span {
+  display: grid;
+  text-align: left;
+  line-height: 1.15;
+}
+.tw-pillbtn b {
+  font-weight: 900;
+  font-size: 13px;
+}
+.tw-pillbtn em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--t-muted);
+  font-weight: 700;
+}
+.tw-badge {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: var(--t-mint);
+  color: var(--t-ink);
+  font-size: 10.5px;
+  font-weight: 900;
+  display: grid !important;
+  place-items: center;
+}
+.tw-peek .tippy-mascot {
+  animation: tw-popin 0.75s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+/* 🧪 practice runs: a small link, and one dismissible line for how it went */
+.tw-practice {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+.tw-practice-line {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  min-width: 0;
+}
+.tw-practice-line .tw-x {
+  flex: none;
+}
+.tw-practice-btn {
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px !important;
+}
+.tw-practice-btn:hover:not(:disabled) {
+  background: var(--t-surface-2);
+  color: var(--t-text) !important;
+}
+.tw-practice-btn:disabled {
+  opacity: 0.55;
+  cursor: default !important;
+}
+.tw-practice-msg {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--t-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tw-practice-msg.ok {
+  color: var(--t-up);
+}
+.tw-practice-msg.warn {
+  color: var(--t-amber);
+}
+
+/* host frame inside fomo */
+.tw-host {
+  position: fixed;
+  z-index: 2147483000;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw,
+  .tw-pillbar,
+  .tw-intro .tippy-mascot,
+  .tw-intro .tw-bubble,
+  .tw-caret {
+    animation: none !important;
+  }
+  .tw-chip,
+  .tw-mode,
+  .tw-arm,
+  .tw-opt,
+  .tw-qchip,
+  .tw-trig-row,
+  .tw-pctbox {
+    transition: none !important;
+  }
+  .tw-chip:active,
+  .tw-arm:active,
+  .tw-slider input[type='range']:active::-webkit-slider-thumb {
+    transform: none;
+  }
+}
+
+/* a question in the notice bar: a level dragged on fomo's chart, "move your stop loss?", a preset */
+.tw-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  background: rgba(91, 156, 255, 0.1);
+  border-bottom: 1px solid var(--t-line);
+  font-size: 12px;
+  font-weight: 700;
+}
+.tw-notice.warn {
+  background: rgba(255, 181, 71, 0.1);
+  color: var(--t-amber);
+}
+.tw-notice-text {
+  flex: 1;
+  min-width: 0;
+}
+.tw-notice-ok,
+.tw-notice-no {
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--t-line);
+  font-weight: 800;
+  font-size: 11.5px;
+}
+.tw-notice-ok {
+  background: var(--t-mint);
+  border-color: var(--t-mint);
+  color: var(--t-ink) !important;
+}
+.tw-notice-no {
+  background: var(--t-surface-3);
+}
+.tw-notice button:disabled {
+  opacity: 0.5;
+}
+
+/* 💬 chat with Tippy: a one-line ask box at the bottom of the window; the last
+   few exchanges (and a confirm card) show above it once you've asked something.
+   Scoped to .tw-chat so the toolbar popup can use it too. */
+.tw-chat {
+  border-top: 1px solid var(--t-line);
+  background: var(--t-bg);
+}
+.tw-chat button {
+  font: inherit;
+  cursor: pointer;
+}
+.tw-chat-log {
+  display: grid;
+  gap: 8px;
+  /* short, so the window doesn't grow up over fomo's own Buy / Sell panel */
+  max-height: 150px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 8px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--t-line-2) transparent;
+}
+.tw-chat-turn {
+  display: grid;
+  gap: 4px;
+}
+.tw-chat-you {
+  justify-self: end;
+  max-width: 85%;
+  padding: 4px 9px;
+  border-radius: 10px 10px 3px 10px;
+  background: var(--t-surface-3);
+  color: var(--t-text);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.tw-chat-tippy {
+  justify-self: start;
+  max-width: 94%;
+  padding: 6px 9px;
+  border: 1px solid rgba(94, 230, 181, 0.22);
+  border-radius: 10px 10px 10px 3px;
+  background: var(--t-mint-soft);
+  color: var(--t-text);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.tw-chat-tippy.warn {
+  border-color: rgba(255, 181, 71, 0.35);
+  background: rgba(255, 181, 71, 0.1);
+  color: var(--t-amber);
+}
+.tw-chat-dots {
+  color: var(--t-mint);
+  animation: tw-caret 0.8s steps(1) infinite;
+}
+.tw-chat-acts {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  white-space: normal;
+}
+.tw-chat-ok,
+.tw-chat-no {
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 7px;
+  font-weight: 900;
+  font-size: 12px;
+}
+.tw-chat-ok {
+  border: 0;
+  background: var(--t-mint);
+  color: var(--t-ink) !important;
+}
+.tw-chat-no {
+  border: 1px solid var(--t-line-2);
+  background: var(--t-surface-3);
+  color: var(--t-text) !important;
+}
+.tw-chat-ok:hover:not(:disabled),
+.tw-chat-no:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.tw-chat-acts button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.tw-chat-result {
+  margin-top: 5px;
+  font-weight: 800;
+  font-size: 11.5px;
+  color: var(--t-muted);
+  white-space: normal;
+}
+.tw-chat-result.ok {
+  color: var(--t-up);
+}
+.tw-chat-result.warn {
+  color: var(--t-amber);
+}
+.tw-chat-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 6px 0 9px;
+}
+.tw-chat-icon {
+  flex: none;
+  font-size: 13px;
+  opacity: 0.8;
+}
+.tw-chat-bar input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--t-line);
+  border-radius: 8px;
+  background: var(--t-surface);
+  color: var(--t-text);
+  font: 600 12px var(--t-font);
+  outline: none;
+}
+.tw-chat-bar input::placeholder {
+  color: var(--t-muted);
+}
+.tw-chat-bar input:focus {
+  border-color: var(--t-mint);
+}
+.tw-chat-clear {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--t-muted) !important;
+  font-size: 12px;
+  line-height: 1;
+}
+.tw-chat-clear:hover:not(:disabled) {
+  background: var(--t-surface-3);
+  color: var(--t-text) !important;
+}
+.tw-chat-clear:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-chat-dots {
+    animation: none !important;
+  }
+}
+/* the same chat in the toolbar popup: a card of its own */
+.t-popup .tw-chat {
+  border: 1px solid var(--t-line);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 12.5px;
+}
+
+/* 🔔 "Tippy filled order" pop-ups on fomo's page — top centre, over the chart
+   header, so they never sit on fomo's own Buy / Sell panel. Above Tippy's window
+   but never above the "Tippy is selling…" overlay (.t-overlay, 2147483001 — it
+   comes later in the page, so it wins the tie and always blocks clicks). */
+.tw-toasts {
+  position: fixed;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483001;
+  display: grid;
+  gap: 8px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+}
+.tw-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 8px 10px 10px;
+  background: var(--t-surface);
+  border: 1px solid var(--t-line);
+  border-left: 3px solid var(--t-mint);
+  border-radius: 12px;
+  box-shadow: var(--t-shadow);
+  color: var(--t-text);
+  font-size: 12.5px;
+  line-height: 1.4;
+  animation: tw-toast-in 0.28s cubic-bezier(0.2, 1.25, 0.4, 1) both;
+}
+.tw-toast.stop {
+  border-left-color: var(--t-red);
+}
+.tw-toast.info {
+  border-left-color: var(--t-amber);
+}
+.tw-toast .tippy-mascot {
+  flex: none;
+}
+.tw-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.tw-toast-title {
+  font-weight: 800;
+  font-size: 13px;
+}
+.tw-toast.good .tw-toast-title {
+  color: var(--t-mint);
+}
+.tw-toast.stop .tw-toast-title {
+  color: var(--t-red);
+}
+.tw-toast-text {
+  color: var(--t-text);
+}
+.tw-toast-open {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--t-mint);
+  font: inherit;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tw-toast-x {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--t-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tw-toast-x:hover,
+.tw-toast-open:hover {
+  color: var(--t-text);
+}
+@keyframes tw-toast-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-toast { animation: none; }
+}
+
+/* ☀ orders only fire while the computer is awake — say so when keep-awake is off */
+.tw-awake-off {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 10px 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 181, 71, 0.1);
+  border: 1px solid rgba(255, 181, 71, 0.3);
+  color: var(--t-amber);
+  font-size: 12px;
+  font-weight: 700;
+}
+.tw-awake-off span {
+  flex: 1;
+}
+.tw-awake-off .tw-notice-ok {
+  flex: none;
+}

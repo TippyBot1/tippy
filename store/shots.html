@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tippy store screenshot</title>
+    <style>
+      /* 1280×800 Chrome Web Store screenshot: a headline on the left, Tippy's real
+         window (the dev harness, mocked data) on the right. render.sh serves this
+         next to the harness build and screenshots each ?scene=. */
+      :root {
+        --bg: #0a0c0e;
+        --text: #e9eef2;
+        --muted: #8b96a1;
+        --mint: #5ee6b5;
+        --red: #ff5d73;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1280px;
+        height: 800px;
+        overflow: hidden;
+        background: radial-gradient(900px 600px at 85% 40%, rgba(94, 230, 181, 0.1), transparent 60%), var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      .copy {
+        position: absolute;
+        left: 72px;
+        top: 0;
+        bottom: 0;
+        width: 600px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 2;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        font-size: 22px;
+        margin-bottom: 28px;
+      }
+      .brand img {
+        width: 44px;
+        height: 44px;
+      }
+      h1 {
+        font-size: 50px;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        margin: 0 0 18px;
+      }
+      h1 em {
+        font-style: normal;
+        color: var(--mint);
+      }
+      h1 em.red {
+        color: var(--red);
+      }
+      p {
+        font-size: 21px;
+        line-height: 1.45;
+        color: var(--muted);
+        margin: 0 0 26px;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 12px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      li::before {
+        content: '✓';
+        color: var(--mint);
+        margin-right: 10px;
+      }
+      .foot {
+        position: absolute;
+        left: 72px;
+        bottom: 26px;
+        font-size: 13px;
+        color: #59636d;
+        z-index: 2;
+      }
+      .stage {
+        position: absolute;
+        top: 0;
+        left: -288px;
+        width: 1280px;
+        height: 714px;
+        transform: scale(1.12);
+        transform-origin: 0 0;
+        border: 0;
+        z-index: 1;
+        background: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <div class="brand"><img src="./tippy-icon.svg" alt="" />Tippy</div>
+      <h1 id="h"></h1>
+      <p id="p"></p>
+      <ul id="ul"></ul>
+    </div>
+    <div class="foot">Independent project · not affiliated with fomo · example data</div>
+    <iframe class="stage" id="stage" src="../?seed" title="Tippy"></iframe>
+    <script>
+      const SCENES = {
+        1: {
+          h: 'Take profit &amp; stop loss <em>for fomo</em>',
+          p: 'Type a market cap, pick how much of your bag to sell, done. Tippy watches the price and presses fomo’s own Sell button for you.',
+          ul: ['Any market cap, any % of your bag', 'Take-profits and stops on one ladder', 'Free · no keys · no wallet connect'],
+          run: (w) => (type(w, 'Market cap to sell at', '1m'), later(() => chip(w, '25%'))),
+        },
+        2: {
+          h: 'Stops that sell <em class="red">exactly what you choose</em>',
+          p: 'Sell 10% if it drops to $350K, the rest at $210K. Tippy shows the move from now and your profit or loss before you press anything.',
+          ul: ['Partial stops and a full stop loss', 'Wick protection: it has to stay down', 'Gain / loss vs your entry, live'],
+          run: (w) => (type(w, 'Market cap to sell at', '350k'), later(() => chip(w, '10%'))),
+        },
+        3: {
+          h: 'Limit buys at an <em>exact market cap</em>',
+          p: 'Buy the dip at $340K MC, then let Tippy guard the new coins with your favourite take-profit and stop loss.',
+          ul: ['Buys once — never twice', 'Expires when you want it to', 'Protect the coins automatically'],
+          run: (w) => (tab(w, 'Buy'), later(() => type(w, 'Market cap to buy at', '340k'))),
+        },
+        4: {
+          h: 'Or just <em>tell Tippy</em>',
+          p: '“sell 10% at 350k”, “tp half at 2x”, “buy $20 at 300k mcap”. Tippy shows exactly what it will do — nothing happens until you tap.',
+          ul: ['Understands market caps, prices, % and $', 'Runs on your computer — nothing is sent away', 'Always asks before acting'],
+          run: (w) => chat(w, 'sell 10% at 350k'),
+        },
+        5: {
+          h: 'Know the moment <em>an order fills</em>',
+          p: 'A pop-up on fomo, a desktop notification or a Telegram message: “Tippy filled order — Tippy sold 50% of $BONKLE at $600K MC.”',
+          ul: ['Fills, stops and expired orders', 'Dashed lines on fomo’s chart', 'Drag a line to move the order'],
+          run: (w) => (
+            (w.document.head.appendChild(w.document.createElement('style')).textContent = '.tw-toasts{left:auto!important;right:24px!important;top:70px!important;transform:none!important}'),
+            w.__tippy.storage.set({
+              notices: [
+                { id: 'n1', at: Date.now(), key: '', title: 'Tippy filled order', text: 'Tippy sold 50% of $BONKLE at $600K MC (take-profit 1).', tone: 'good' },
+              ],
+            })
+          ),
+        },
+      };
+
+      const scene = SCENES[new URLSearchParams(location.search).get('scene') ?? '1'];
+      document.getElementById('h').innerHTML = scene.h;
+      document.getElementById('p').textContent = scene.p;
+      document.getElementById('ul').innerHTML = scene.ul.map((t) => `<li>${t}</li>`).join('');
+
+      const later = (fn, ms = 400) => setTimeout(fn, ms);
+      const win = (w) => w.document.querySelector('.tw');
+      function setValue(el, v) {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      function type(w, label, v) {
+        const el = [...win(w).querySelectorAll('input')].find((i) => (i.getAttribute('aria-label') || '').startsWith(label));
+        if (el) setValue(el, v);
+      }
+      function button(w, text) {
+        return [...win(w).querySelectorAll('button')].find((b) => (b.textContent || '').trim().startsWith(text));
+      }
+      const chip = (w, text) => button(w, text)?.click();
+      const tab = (w, text) => button(w, text)?.click();
+      function chat(w, text) {
+        const el = [...win(w).querySelectorAll('input')].find((i) => (i.getAttribute('aria-label') || '').startsWith('Ask Tippy'));
+        if (!el) return;
+        setValue(el, text);
+        later(() => el.closest('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })), 300);
+      }
+
+      const stage = document.getElementById('stage');
+      stage.addEventListener('load', () => {
+        const w = stage.contentWindow;
+        // Hide the harness's pretend page; only Tippy's window shows.
+        const css = w.document.createElement('style');
+        css.textContent = 'body{background:transparent!important}.fake,.note{display:none!important}';
+        w.document.head.appendChild(css);
+        // The harness also seeds a "did it buy?" order for testing — not for the store.
+        const tidy = async () => {
+          const { buys } = await w.__tippy.storage.get(['buys']);
+          const keep = { ...(buys || {}) };
+          delete keep['seed-buy-2'];
+          await w.__tippy.storage.set({ buys: keep });
+        };
+        const ready = () => (win(w) && w.__tippy ? tidy().then(() => later(() => scene.run(w), 400)) : later(ready, 100));
+        ready();
+      });
+    </script>
+  </body>
+</html>

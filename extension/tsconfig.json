@@ -1,0 +1,12 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true
+  },
+  "include": ["src", "test", ".wxt/wxt.d.ts"]
+}

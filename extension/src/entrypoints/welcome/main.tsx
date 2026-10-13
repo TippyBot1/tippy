@@ -1,0 +1,149 @@
+// First-run onboarding: keep the orders working (awake), log in, desk tab — then "you're all set".
+import { render } from 'preact';
+import { useEffect, useState } from 'preact/hooks';
+import { browser } from 'wxt/browser';
+import '../../ui/tippy.css';
+import '../../ui/page.css';
+import type { RelayResponse } from '../../shared/messages';
+import { send, useTippyState } from '../../ui/bridge';
+import { Mascot } from '../../ui/Mascot';
+
+const isEdge = navigator.userAgent.includes('Edg/');
+
+/** Is there a fomo tab with a logged-in session? */
+async function fomoReady(): Promise<boolean> {
+  const tabs = await browser.tabs.query({ url: 'https://fomo.family/*' });
+  for (const t of tabs) {
+    if (t.id == null) continue;
+    try {
+      const res = (await browser.tabs.sendMessage(t.id, { type: 'PING' })) as RelayResponse;
+      if (res?.ok && res.session.ok) return true;
+    } catch {
+      /* not loaded yet */
+    }
+  }
+  return false;
+}
+
+function Welcome() {
+  const state = useTippyState();
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [awakeDone, setAwakeDone] = useState(false);
+
+  useEffect(() => {
+    const check = () => fomoReady().then(setLoggedIn);
+    check();
+    const t = setInterval(check, 2_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const allDone = loggedIn && !!state?.settings.deskConsent && awakeDone;
+  useEffect(() => {
+    if (allDone && state && !state.settings.onboarded) send({ type: 'SET_SETTINGS', patch: { onboarded: true } });
+  }, [allDone]);
+
+  if (!state) return null;
+  const s = state.settings;
+
+  return (
+    <div class="tippy t-page">
+      <div class="t-wrap" style={{ maxWidth: 600 }}>
+        <div class="t-hero">
+          <Mascot mood={allDone ? 'happy' : 'watching'} size={96} />
+          <div>
+            <h1>{allDone ? "You're all set!" : "Hi, I'm Tippy!"}</h1>
+            <p>{allDone ? 'Open any coin on fomo and tap me in the bottom-right corner.' : "I'll take profit and stop your losses on fomo while you live your life. Three quick steps:"}</p>
+          </div>
+        </div>
+
+        <div class="t-panel">
+          <div class={`t-step${awakeDone ? ' t-done' : ''}`}>
+            <div class="t-step-n">{awakeDone ? '✓' : '1'}</div>
+            <div>
+              <h3>Keep your orders working</h3>
+              <p>
+                Your take-profits and stops stay on until you turn them off — but I can only sell while this computer is on and {isEdge ? 'Edge' : 'Chrome'} is open.
+              </p>
+              <ul class="t-checks">
+                <li>
+                  <b>{s.stayAwake ? '✓ I keep this computer awake' : '✗ Keeping this computer awake is off'}</b> while your orders are on (the screen can still turn off).{' '}
+                  {!s.stayAwake && (
+                    <button class="t-btn t-btn-ghost" onClick={() => send({ type: 'SET_SETTINGS', patch: { stayAwake: true } })}>
+                      Turn it on
+                    </button>
+                  )}
+                </li>
+                <li>Leave the laptop lid open and the charger in — closing the lid sleeps it.</li>
+                <li>
+                  {isEdge
+                    ? 'In Edge: Settings → System and performance → "Never put these sites to sleep" → add fomo.family.'
+                    : 'In Chrome: Settings → Performance → "Always keep these sites active" → Add → fomo.family.'}
+                </li>
+              </ul>
+              {!awakeDone && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button class="t-btn t-btn-primary" onClick={() => browser.tabs.create({ url: isEdge ? 'edge://settings/system/managePerformance' : 'chrome://settings/performance' })}>
+                    Open {isEdge ? 'Edge' : 'Chrome'} settings
+                  </button>
+                  <button class="t-btn t-btn-ghost" onClick={() => setAwakeDone(true)}>
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div class={`t-step${loggedIn ? ' t-done' : ''}`}>
+            <div class="t-step-n">{loggedIn ? '✓' : '2'}</div>
+            <div>
+              <h3>Open fomo and log in</h3>
+              <p>I work inside your own fomo tab, using fomo's own buttons. I never see your keys.</p>
+              {!loggedIn && (
+                <button class="t-btn t-btn-primary" onClick={() => browser.tabs.create({ url: 'https://fomo.family/' })}>
+                  Open fomo.family
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div class={`t-step${s.deskConsent ? ' t-done' : ''}`}>
+            <div class="t-step-n">{s.deskConsent ? '✓' : '3'}</div>
+            <div>
+              <h3>Let me keep a little fomo tab open</h3>
+              <p>It's my desk — I read prices through it. I'll pin it so it stays out of your way.</p>
+              {!s.deskConsent && (
+                <button class="t-btn t-btn-primary" onClick={() => send({ type: 'SET_SETTINGS', patch: { deskConsent: true } })}>
+                  Sure, keep it pinned
+                </button>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        <div class="t-panel">
+          <div class="t-setting">
+            <div>
+              <b>Optional: alerts on your phone 📱</b>
+              <small>Get a Telegram ping when I sell — and a warning if your computer goes to sleep while your orders are on.</small>
+            </div>
+            <button class="t-btn t-btn-ghost" onClick={() => browser.tabs.create({ url: browser.runtime.getURL('/options.html#alerts') })}>
+              Set up
+            </button>
+          </div>
+        </div>
+
+        <div class="t-promise">
+          <Mascot mood="idle" size={34} />
+          I will never ask for your private key, seed phrase or password. If anything claiming to be me does, it's a scam.
+        </div>
+
+        <p class="t-help" style={{ textAlign: 'center' }}>
+          Good to know: I only work while this computer is awake and your browser is open. Sells are market orders, so fast dumps can fill below your stop.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+render(<Welcome />, document.getElementById('app')!);
