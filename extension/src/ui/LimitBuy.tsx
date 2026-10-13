@@ -13,7 +13,7 @@ import { summarizePlan } from '../engine/orders';
 import { describeTrigger, formatUsd, formatX } from '../engine/triggers';
 import type { BuyInput, BuyOrder, Plan, Trigger } from '../engine/types';
 import type { CommandResult, PracticeResult } from '../shared/messages';
-import type { Preset } from '../shared/settings';
+import { DEFAULT_PRESETS, type Preset } from '../shared/settings';
 import { BuyOrders } from './BuyList';
 import { cash, parseMoney } from './format';
 import { type FieldUnit, levelProblem, levelShort, movePct, niceMc, normalizeNumber, type Now, relToNow } from './levels';
@@ -63,6 +63,13 @@ export function presetSummary(p: Preset): string {
   if (p.slX != null) parts.push(`SL ${describeTrigger({ kind: 'x', value: p.slX })}`);
   if (p.trail) parts.push(`trail ${p.trail.pct}%${p.trail.activateX ? ` after ${formatX(p.trail.activateX)}` : ''}`);
   return parts.join(' · ') || 'no levels';
+}
+
+/** The preset's own words while its levels are the stock ones; once you change a level, what it now does. */
+export function presetBlurb(p: Preset): string {
+  const stock = DEFAULT_PRESETS.find((d) => d.id === p.id);
+  const same = stock && JSON.stringify([stock.tps, stock.slX, stock.trail]) === JSON.stringify([p.tps, p.slX, p.trail]);
+  return same ? p.blurb : presetSummary(p);
 }
 
 export function toBuyInput(d: BuyDraft & { trigger: Trigger }, token: WindowToken, guard: Preset | null): Omit<BuyInput, 'id' | 'now'> {

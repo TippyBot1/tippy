@@ -209,7 +209,7 @@ describe('✎ changes an order in place', () => {
     await show();
     await click(byLabel('Change take-profit 3x'));
     expect(level().value).toBe('3M');
-    expect($('.tw-means')!.textContent).toBe('+50% from now · +200% vs your entry ($1M MC)');
+    expect($('.tw-means')!.textContent).toBe('+50% from now · +200% vs entry');
     expect(amount('50%').getAttribute('aria-pressed')).toBe('true');
     expect(armBtn().textContent).toBe('Save take profit · 50% at $3M MC');
     expect(btn('Cancel — keep it as it was')).toBeDefined();

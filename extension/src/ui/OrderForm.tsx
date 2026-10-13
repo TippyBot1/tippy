@@ -1,7 +1,7 @@
 // The order form both tabs of Tippy's window share, laid out like the limit
 // panels traders know from Axiom — in Tippy's own style:
 //   Amount (quick chips + ✎ other) → the level as a market cap (⇄ price), and
-//   right under it what that means ("−2.6% from now · −1.8% vs your entry"),
+//   right under it what that means ("−2.6% from now · −1.8% vs entry"),
 //   then a −100%…+100% slider and a % box (0% = the market now) → one plain
 //   sentence → one big button (the tabs draw the sentence and the button).
 // Also the one row style every order is listed in ("Your orders", "Your buys"):
@@ -271,7 +271,7 @@ export function TriggerBox({
             <>
               {' · '}
               <span class={gain(vx)} title={`Against your entry at ${entryText}`}>
-                {dropText(vx)} vs your entry ({entryText})
+                {dropText(vx)} vs entry
               </span>
             </>
           )}

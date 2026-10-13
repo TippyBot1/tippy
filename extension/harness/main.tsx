@@ -16,7 +16,8 @@ if (params.get('page') !== 'home' && !location.pathname.includes('/tokens/')) {
 
 const ctx = {
   addEventListener: (t: EventTarget, type: string, cb: EventListener) => t.addEventListener(type, cb),
-  setInterval: (cb: () => void, ms: number) => setInterval(cb, ms),
+  // ?demo refreshes the window's price 10× faster, so the scripted pump reads smoothly on video.
+  setInterval: (cb: () => void, ms: number) => setInterval(cb, params.has('demo') && ms >= 1000 ? ms / 10 : ms),
 };
 
 // ?shadow mounts Tippy inside a shadow root, like the real content script does on fomo.

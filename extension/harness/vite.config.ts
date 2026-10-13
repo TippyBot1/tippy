@@ -29,6 +29,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(here, 'index.html'),
+        demo: resolve(here, 'demo.html'),
         popup: resolve(here, 'pages/popup.html'),
         options: resolve(here, 'pages/options.html'),
         welcome: resolve(here, 'pages/welcome.html'),

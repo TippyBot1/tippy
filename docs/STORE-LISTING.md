@@ -18,34 +18,38 @@ Take-profit, stop-loss and limit buys for your fomo trades. Any market cap, any 
 
 **Description:**
 
-Tippy adds the orders fomo is missing — take-profit, stop-loss and limit buys — to the coins you trade on fomo.family. Type a market cap, pick how much of your bag to sell, and Tippy watches the price and presses fomo's own Sell button for you when it gets there.
+Tippy gives your fomo trades the orders fomo doesn't have yet: take-profit, stop-loss and limit buys.
 
-WHAT YOU CAN DO
-• Take profit at any market cap: sell 25% at $1M, another 25% at $5M…
-• Stop losses that sell exactly what you choose: 10% if it drops to $350K, the rest at $210K
-• Wick protection: the price has to stay at your stop, not just touch it
-• Limit buys at an exact market cap, then guard the new coins automatically
-• See the move from now and your gain or loss before you press anything
-• Your orders as dashed lines on fomo's chart — drag a line to move the order
-• Chat with Tippy: "sell 10% at 700k", "tp half at 2x", "buy $20 at 300k mcap" — it shows exactly what it will do and waits for your tap
-• Pop-ups when an order fills or expires, plus optional desktop notifications and Telegram alerts
-• Practice runs: walk through a real sell or buy and stop before the final button
-• Works on every chain fomo trades on the web
+Pick a market cap, choose how much of your bag to sell, and Tippy watches the price for you. When it gets there, Tippy clicks fomo's own Sell button in your open fomo tab, just like you would.
 
-BUILT TO BE BORING ABOUT SAFETY
-• Never asks for your private key, seed phrase or password
-• No wallet connection — Tippy works inside your own logged-in fomo tab
-• One permission: fomo.family only
-• Your orders stay on your computer
-• Free, no token, no account
+SAFE BY DESIGN
+- Tippy never asks for your seed phrase, private key or password. If anything claiming to be Tippy ever does, it's a scam.
+- No wallet connection and nothing to sign. Your money stays in your own fomo account.
+- Tippy can only click Buy and Sell on fomo. It can't withdraw or send your money anywhere.
+- It only runs on fomo.family, the one site it asks permission for.
+- Your orders are saved on your own computer, not on our servers.
+- Free and open source, so anyone can read the code: https://github.com/TippyBot1/tippy
+- No token, no account, no sign-up.
 
-HONEST LIMITS
-• Your orders stay on until you turn them off, and Tippy keeps your computer awake while they are — but it can only sell while the computer is on and Chrome is open with fomo. Leave a laptop's lid open. If it's off when a price is hit, a stop sells when Tippy is back (at that moment's price) and a take-profit only sells if the price is still there. Phone alerts warn you if Tippy stops watching.
-• Sells are market orders on fomo, so a fast drop can fill below your level.
-• Tippy is an independent project and is not affiliated with or endorsed by fomo.
+WHAT IT DOES
+- Take profit at any market cap. For example: sell 25% at $1M and another 25% at $5M.
+- Stop losses for exactly the amount you choose. For example: sell 10% if it drops to $350K and the rest at $210K.
+- Wick protection: the price has to stay at your stop, so one quick wick doesn't sell you out.
+- Limit buys at the market cap you want, with a take-profit and stop-loss added as soon as it fills if you like.
+- Before you confirm, you see how far your level is from the price now and your gain or loss there.
+- Your orders show as lines on fomo's chart. Drag a line to move the order.
+- Type orders in plain English, like "sell 10% at 700k" or "buy $20 at 300k mcap". Tippy shows exactly what it will do and waits for you to confirm.
+- A pop-up when an order fills or expires, plus optional desktop notifications and Telegram alerts.
+- Practice mode walks through a real trade and stops before the final click, so you can watch it work without spending anything.
+- Works on every chain you can trade on fomo's website.
 
-Questions: hello@tippybot.fun · https://tippybot.fun
-Open source (MIT): https://github.com/TippyBot1/tippy
+GOOD TO KNOW
+- Tippy runs in your browser, so it can only trade while your computer is on and Chrome is open. It keeps your computer awake while you have orders on. If your computer was off when a price was hit, a stop loss sells as soon as Tippy is back (at that moment's price), and a take-profit only sells if the price is still there.
+- Sells are market orders on fomo, so in a fast drop the fill can come in below your level.
+- Tippy is an independent project. It isn't made by or affiliated with fomo.
+
+Questions or problems: hello@tippybot.fun
+Website: https://tippybot.fun
 
 **Category:** Productivity → Tools
 **Language:** English

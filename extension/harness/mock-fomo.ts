@@ -8,7 +8,24 @@ export const HARNESS_KEY = 'TiPPYdemo1111111111111111111111111111111pump:1399811
 let price = 0.00042;
 const SUPPLY = 1e9;
 const bagParam = new URLSearchParams(location.search).get('bag');
-const BAG = bagParam != null && Number.isFinite(Number(bagParam)) ? Number(bagParam) : 250_000;
+let bag = bagParam != null && Number.isFinite(Number(bagParam)) ? Number(bagParam) : 250_000;
+// ?demo: the price only moves when harness/demo.ts moves it (scripted for the promo video).
+const DEMO = new URLSearchParams(location.search).has('demo');
+export const demoCtl = {
+  get price() {
+    return price;
+  },
+  set price(p: number) {
+    price = p;
+  },
+  get bag() {
+    return bag;
+  },
+  set bag(b: number) {
+    bag = b;
+  },
+  supply: 1e9,
+};
 const SOLANA = CHAINS.find((c) => c.slug === 'solana')!;
 const CASH: Holding = { key: tokenKey(SOLANA.usdc, SOLANA.networkId), amount: 25, priceUSD: 1, mc: null, symbol: 'USDC', name: 'USD Coin' };
 
@@ -26,7 +43,7 @@ export function session(): SessionState {
 }
 
 function q(): TokenQuote {
-  price *= Math.exp((Math.random() - 0.5) * 0.04);
+  if (!DEMO) price *= Math.exp((Math.random() - 0.5) * 0.04);
   return { key: HARNESS_KEY, priceUSD: price, mc: price * SUPPLY, symbol: 'BONKLE', name: 'Bonkle (pretend)' };
 }
 
@@ -35,8 +52,8 @@ export async function quotes(keys: string[]): Promise<TokenQuote[]> {
 }
 
 export async function balances(): Promise<{ holdings: Holding[]; unparsed: number }> {
-  const coin: Holding = { key: HARNESS_KEY, amount: BAG, priceUSD: price, mc: price * SUPPLY, symbol: 'BONKLE', name: 'Bonkle (pretend)' };
-  return { holdings: BAG > 0 ? [coin, CASH] : [CASH], unparsed: 0 };
+  const coin: Holding = { key: HARNESS_KEY, amount: bag, priceUSD: price, mc: price * SUPPLY, symbol: 'BONKLE', name: 'Bonkle (pretend)' };
+  return { holdings: bag > 0 ? [coin, CASH] : [CASH], unparsed: 0 };
 }
 
 export async function me() {

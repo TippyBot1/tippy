@@ -7,8 +7,10 @@ import { linkStatus, newLinkId } from '../../shared/alerts';
 import { SITE_URL, TELEGRAM_BOT } from '../../shared/config';
 import type { Preset, Settings } from '../../shared/settings';
 import { DEFAULT_PRESETS } from '../../shared/settings';
+import { presetBlurb } from '../../ui/LimitBuy';
 import { send, useTippyState } from '../../ui/bridge';
 import { Mascot } from '../../ui/Mascot';
+
 
 const set = (patch: Partial<Settings>) => send({ type: 'SET_SETTINGS', patch });
 
@@ -245,7 +247,7 @@ function PresetEditor({ slot, preset, isDefault, onDefault, onChange }: { slot: 
           <b>
             P{slot} · {preset.emoji} {preset.name}
           </b>
-          <small>{preset.blurb}</small>
+          <small>{presetBlurb(preset)}</small>
         </div>
         <button class={`t-btn ${isDefault ? 't-btn-primary' : 't-btn-ghost'}`} style={{ width: 'auto', padding: '8px 12px' }} onClick={onDefault}>
           {isDefault ? '★ Auto-guard' : '☆ Use for auto-guard'}

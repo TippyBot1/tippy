@@ -196,10 +196,10 @@ describe('what the level means, right under the box', () => {
     const plan = livePlan({ symbol: 'HIGGS', entry: { priceUSD: 0.000716, mc: 716_000, source: 'armed-at' }, tps: [], sl: { trigger: { kind: 'mc', value: 600_000 } } });
     await show({ token: higgs, plan });
     await typeInto(level(), '700k');
-    expect(means()).toBe('−2.6% from now · −2.2% vs your entry ($716K MC)');
+    expect(means()).toBe('−2.6% from now · −2.2% vs entry');
     expect(meansParts().map((p) => p[1])).toEqual(['', 'down']);
     await typeInto(level(), '800k');
-    expect(means()).toBe('+11.3% from now · +11.7% vs your entry ($716K MC)');
+    expect(means()).toBe('+11.3% from now · +11.7% vs entry');
     expect(meansParts().map((p) => p[1])).toEqual(['', 'up']);
   });
 
@@ -207,10 +207,10 @@ describe('what the level means, right under the box', () => {
     const plan = livePlan({ entry: { priceUSD: 0.0021, mc: 2_100_000, source: 'armed-at' }, tps: [], sl: null, trailing: { trailPct: 20, activateX: null } });
     await show({ plan });
     await typeInto(level(), '2.05m');
-    expect(means()).toBe('+2.5% from now · −2.4% vs your entry ($2.1M MC)');
+    expect(means()).toBe('+2.5% from now · −2.4% vs entry');
     expect(meansParts().map((p) => p[1])).toEqual(['', 'down']);
     await click(flip()!);
-    expect(means()).toBe('+2.5% from now · −2.4% vs your entry ($0.0021)');
+    expect(means()).toBe('+2.5% from now · −2.4% vs entry');
   });
 
   it('a limit buy shows the move from now', async () => {
