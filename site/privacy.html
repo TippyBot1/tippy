@@ -3,15 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tippy — Privacy</title>
-    <meta name="description" content="What Tippy stores, what it sends, and what it never touches." />
+    <title>Privacy — Tippy</title>
+    <meta name="description" content="What Tippy keeps on your computer, what it sends (only if you turn it on), and what it never touches." />
+    <meta name="theme-color" content="#060510" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="canonical" href="https://tippybot.fun/privacy" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Tippy" />
+    <meta property="og:url" content="https://tippybot.fun/privacy" />
+    <meta property="og:title" content="Privacy — Tippy" />
+    <meta property="og:description" content="Tippy runs on your computer. It never sees your keys, and nothing about your fomo account is sent to us unless you turn on Telegram alerts." />
+    <meta property="og:image" content="https://tippybot.fun/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/fonts/Onest-Variable.latin.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      html { background: #060510; color: #f7f7f7; color-scheme: dark; }
+    </style>
   </head>
   <body>
     <div id="app"></div>
+    <noscript>
+      <div style="max-width: 640px; margin: 64px auto; padding: 0 20px; font: 16px/1.6 system-ui, sans-serif; color: #f7f7f7">
+        <p>Tippy runs on your computer. Your orders and settings stay there. Tippy never asks for your keys, and nothing about your fomo account is sent to us unless you turn on Telegram alerts. Questions: hello@tippybot.fun</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/privacy.tsx"></script>
   </body>
 </html>
