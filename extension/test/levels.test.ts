@@ -151,6 +151,9 @@ describe("the order form's level box", () => {
   it('the % box and the slider: a move from now, both ways', () => {
     expect(pctBoxText(-2.6426)).toBe('-2.6');
     expect(pctBoxText(400)).toBe('+400');
+    expect(pctBoxText(115.8)).toBe('+116'); // whole numbers from 100% up, so they fit the box
+    expect(pctBoxText(-99.96)).toBe('-100');
+    expect(pctBoxText(99.9)).toBe('+99.9');
     expect(pctBoxText(NaN)).toBe('');
     expect(parsePct('−2.6%')).toBe(-2.6);
     expect(parsePct('+10')).toBe(10);

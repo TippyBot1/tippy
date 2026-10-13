@@ -217,6 +217,11 @@ describe('Buy tab', () => {
     expect(input.trigger.value).toBeCloseTo(1_400_000);
     await flush();
     expect(say()).toBe("Done! I'm watching $TST — $25 at $1.4M MC, then Classic.");
+    // The level is cleared, so a second press can't place the same buy again.
+    expect(level().value).toBe('');
+    expect(placeBtn().disabled).toBe(true);
+    expect(placeBtn().textContent).toBe('Set a buy level first');
+    expect(say()).toBe("Done! I'm watching $TST — $25 at $1.4M MC, then Classic.");
   });
 
   it('None protects nothing, Never never expires, and a custom amount is used on Enter', async () => {

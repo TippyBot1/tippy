@@ -14,6 +14,22 @@ import type { Trigger } from '../engine/types';
 import { Pencil } from './LevelEditor';
 import { dropText, type FieldUnit, fieldText, levelFromPct, type Now, parseField, parsePct, pctBoxText, pctFromRel, relToNow, vsEntry } from './levels';
 
+
+/** Off unless localStorage "tippyDebug" is set on the page — for chasing typing glitches on fomo. */
+function debug(...args: unknown[]) {
+  try {
+    if (localStorage.getItem('tippyDebug')) console.debug('[tippy-dbg] level box:', ...args);
+  } catch {
+    /* storage blocked */
+  }
+}
+
+/** Same level? (no level at all counts as the same whether it's null or undefined) */
+function sameLevel(a: Trigger | null | undefined, b: Trigger | null | undefined): boolean {
+  if (!a || !b) return !a && !b;
+  return a.kind === b.kind && a.value === b.value;
+}
+
 export interface AmountChip {
   label: string;
   on: boolean;
@@ -114,26 +130,57 @@ export function TriggerBox({
   onChange: (t: Trigger | null) => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (!focusSignal || !input.current) return;
-    input.current.focus();
-    input.current.select();
-  }, [focusSignal]);
   /** What's typed in the level box / the % box (null = it shows the level as set). */
   const [lvlText, setLvlText] = useState<string | null>(null);
   const [pctText, setPctText] = useState<string | null>(null);
-  /** The last level this box set — anything else came from outside (✎ an order, a fresh form). */
-  const sent = useRef<Trigger | null>(trigger);
   useEffect(() => {
-    if (trigger === sent.current) return;
-    sent.current = trigger;
+    if (!focusSignal || !input.current) return;
+    // A tab picked or an order ✎'d: start the box fresh, then hand it the cursor.
+    setLvlText(null);
+    setPctText(null);
+    input.current.focus();
+    input.current.select();
+  }, [focusSignal]);
+  /** The last level this box set — anything else came from outside (✎ an order, a fresh form). */
+  const sent = useRef<Trigger | null>(trigger ?? null);
+  /** Is the trader typing in the level box right now? (works inside fomo's shadow root too) */
+  const typing = () => {
+    const el = input.current;
+    return !!el && (el.getRootNode() as Document | ShadowRoot).activeElement === el;
+  };
+  /**
+   * Levels this box sent that the window hasn't passed back yet, oldest first. Typing
+   * can outrun the window: on fomo "2" came back only after "2." (no level yet) was
+   * typed — that late "2" is our own echo, not a change from outside.
+   */
+  const pending = useRef<(Trigger | null)[]>([]);
+  useEffect(() => {
+    const mine = pending.current.findIndex((p) => sameLevel(p, trigger));
+    if (mine >= 0) {
+      pending.current = pending.current.slice(mine + 1);
+      return;
+    }
+    // Compare by value: "no level" can come back as undefined or a fresh object.
+    if (sameLevel(trigger, sent.current)) return;
+    pending.current = [];
+    sent.current = trigger ?? null;
+    debug('level changed from outside → clearing what was typed', trigger, typing() ? '(while typing!)' : '');
     setLvlText(null);
     setPctText(null);
   }, [trigger]);
-  useEffect(() => setLvlText(null), [unit]);
+  useEffect(() => {
+    debug('unit', unit, typing() ? '(while typing!)' : '');
+    setLvlText(null);
+  }, [unit]);
+
+  useEffect(() => {
+    debug('box mounted');
+    return () => debug('box unmounted');
+  }, []);
 
   const emit = (t: Trigger | null) => {
-    sent.current = t;
+    sent.current = t ?? null;
+    pending.current = [...pending.current, t ?? null].slice(-20);
     onChange(t);
   };
   const rel = trigger ? relToNow(trigger, now, base) : NaN;
@@ -150,6 +197,7 @@ export function TriggerBox({
   const fill = `--a:${Math.min(50, thumb)}%;--b:${Math.max(50, thumb)}%`;
 
   const typeLevel = (text: string) => {
+    debug('typed', JSON.stringify(text), '→', parseField(text, unit));
     setLvlText(text);
     setPctText(null);
     emit(text.trim() ? parseField(text, unit) : null);
@@ -166,8 +214,14 @@ export function TriggerBox({
     emit(v === 0 ? null : levelFromPct(v, unit, now));
   };
   // Leaving a box tidies what's typed into the level as set ("700k" → "700K") — unless it can't be read.
-  const leaveLevel = () => !lvlBad && setLvlText(null);
+  const leaveLevel = () => {
+    debug('left the box', JSON.stringify(lvlText), lvlBad ? '(kept: unreadable)' : '');
+    if (!lvlBad) setLvlText(null);
+  };
   const leavePct = () => !pctBad && setPctText(null);
+
+  const shown = lvlText ?? fieldText(trigger, unit, base, now);
+  if (typing() && input.current && input.current.value !== shown) debug('redraw overwrites what is typed', JSON.stringify(input.current.value), '→', JSON.stringify(shown), { lvlText, trigger, unit });
 
   return (
     <div class={`tw-box tw-trig${tone ? ` is-${tone}` : ''}`}>
@@ -200,7 +254,7 @@ export function TriggerBox({
           inputMode="decimal"
           autoComplete="off"
           spellcheck={false}
-          value={lvlText ?? fieldText(trigger, unit, base, now)}
+          value={shown}
           placeholder={ref ? fieldText(levelFromPct(0, unit, now), unit, now) : ''}
           aria-label={`${what} to ${side} at (or drag the slider)`}
           onInput={(e) => typeLevel(e.currentTarget.value)}

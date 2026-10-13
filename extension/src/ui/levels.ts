@@ -213,7 +213,8 @@ export const pctFromRel = (rel: number) => (rel - 1) * 100;
 /** A % move in the % box: "+10", "-2.6", "+400" (one decimal at most; '' for none). */
 export function pctBoxText(pct: number): string {
   if (!Number.isFinite(pct)) return '';
-  const r = Math.round(pct * 10) / 10;
+  // Whole numbers from 100% up: "+115.8" doesn't fit the box.
+  const r = Math.abs(pct) >= 99.95 ? Math.round(pct) : Math.round(pct * 10) / 10;
   return r > 0 ? `+${r}` : r < 0 ? String(r) : '0';
 }
 

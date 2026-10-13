@@ -250,7 +250,7 @@ describe('the level box, the slider and the % box stay in step', () => {
     expect(pctBox().value).toBe('+66.9');
     expect(slider().value).toBe('67');
     await typeInto(level(), '$2,500,000');
-    expect(pctBox().value).toBe('+247.7');
+    expect(pctBox().value).toBe('+248');
     expect(slider().value).toBe('100'); // the slider stops at +100%
     await typeInto(level(), '650k');
     expect(pctBox().value).toBe('-9.6');
@@ -647,5 +647,30 @@ describe('keeping the computer awake (orders only fire while it is on)', () => {
     await show({ plan: null, toggles: toggles(false), onToggle });
     expect($('.tw-awake-off')).toBeNull();
     expect(btn('💤')).toBeTruthy();
+  });
+});
+
+describe('typing a level key by key', () => {
+  it('keeps half-typed decimals like "2." while you type "2.5m" (it used to wipe the box)', async () => {
+    await show();
+    let typed = '';
+    for (const ch of '2.5m') {
+      typed += ch;
+      await typeInto(level(), typed);
+      expect(level().value).toBe(typed);
+    }
+    await click(btn(/^Add take profit/));
+    expect(armed()[0].tps[0].trigger).toEqual({ kind: 'mc', value: 2_500_000 });
+  });
+
+  it('a tiny price typed key by key survives too: "0.0004"', async () => {
+    await show();
+    await click(byLabel(/^Switch to price|^Show price|price/i));
+    let typed = '';
+    for (const ch of '0.0004') {
+      typed += ch;
+      await typeInto(level(), typed);
+      expect(level().value).toBe(typed);
+    }
   });
 });

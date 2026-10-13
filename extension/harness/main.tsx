@@ -19,7 +19,15 @@ const ctx = {
   setInterval: (cb: () => void, ms: number) => setInterval(cb, ms),
 };
 
-const root = document.getElementById('tippy')!;
+// ?shadow mounts Tippy inside a shadow root, like the real content script does on fomo.
+const slot = document.getElementById('tippy')!;
+let root: HTMLElement = slot;
+if (params.has('shadow')) {
+  const shadow = slot.attachShadow({ mode: 'open' });
+  for (const s of document.querySelectorAll('style, link[rel="stylesheet"]')) shadow.appendChild(s.cloneNode(true));
+  root = document.createElement('div');
+  shadow.appendChild(root);
+}
 render(<App ctx={ctx as never} />, root);
 
 // expose for manual poking: __tippy.selling({symbol:'BONKLE', pct: 50, dryRun: false}),

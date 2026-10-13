@@ -210,8 +210,10 @@ export function LimitBuy({
     setBusy(true);
     const res = await api.armBuy(input);
     setBusy(false);
-    if (res.ok) setPlaced(`Done! I'm watching $${token.symbol} — ${money(draft.usd)} at ${lvl}${covering ? ', covered by your guard' : guard ? `, then ${guard.name}` : ''}.`);
-    else setError(res.error);
+    if (!res.ok) return setError(res.error);
+    setPlaced(`Done! I'm watching $${token.symbol} — ${money(draft.usd)} at ${lvl}${covering ? ', covered by your guard' : guard ? `, then ${guard.name}` : ''}.`);
+    // Clear the level so a second press can't place the same buy twice.
+    onDraft({ ...draft, trigger: null });
   };
 
   const run = async (fn: () => Promise<CommandResult>) => {
