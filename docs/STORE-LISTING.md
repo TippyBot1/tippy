@@ -45,6 +45,7 @@ HONEST LIMITS
 • Tippy is an independent project and is not affiliated with or endorsed by fomo.
 
 Questions: hello@tippybot.fun · https://tippybot.fun
+Open source (MIT): https://github.com/TippyBot1/tippy
 
 **Category:** Productivity → Tools
 **Language:** English
