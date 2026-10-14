@@ -359,6 +359,17 @@
   background: transparent;
   color: var(--t-down);
 }
+/* `.tippy button` (colour: inherit) outranks one class, so the button colours are
+   said again here: dark text on mint, red for Disconnect, bold labels. */
+.tippy .t-btn {
+  font-weight: 700;
+}
+.tippy .t-btn-primary {
+  color: var(--t-ink);
+}
+.tippy .t-btn-danger {
+  color: var(--t-down);
+}
 
 /* speech bubble from Tippy */
 
