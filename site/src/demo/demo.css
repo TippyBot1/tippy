@@ -1,0 +1,909 @@
+/* =====================================================================
+   /demo — Tippy installed in a browser window, on a pretend coin page laid
+   out like fomo's (its own neutral look: no fomo logo or branding). Tippy's
+   window, popup and pages keep the extension's own styles untouched.
+   ===================================================================== */
+
+.wrap-wide {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.dm {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+/* ---------- the demo's own controls (outside the browser) ---------- */
+.dm-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+}
+.dm-title {
+  display: grid;
+  margin-right: 12px;
+}
+.site .dm-title h1 {
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.dm-title p {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.dm-market {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dm-q {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 8px;
+  align-items: baseline;
+  margin-right: 8px;
+  min-width: 150px;
+}
+.dm-q small {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.dm-q b {
+  font: 600 17px/1.2 var(--mono);
+  font-stretch: 87.5%;
+  font-variant-numeric: tabular-nums;
+}
+.dm-q em {
+  font: 500 12.5px var(--mono);
+  font-style: normal;
+  font-stretch: 87.5%;
+}
+.dm-tour-btn {
+  position: relative;
+  display: none;
+  margin-left: auto;
+}
+.dm-count {
+  margin-left: 6px;
+  font: 500 11.5px var(--mono);
+  color: var(--up);
+}
+.dm-tour-pop {
+  position: absolute;
+  right: 0;
+  top: 46px;
+  z-index: 70;
+  width: min(380px, calc(100vw - 32px));
+}
+
+.dm-stage {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.dm-side {
+  position: sticky;
+  top: 76px;
+}
+
+/* things to try */
+.tour {
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 14px 10px 10px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.tour-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 6px 10px;
+}
+.tour-head b {
+  font-size: 15px;
+  font-weight: 600;
+}
+.tour-head span {
+  font: 500 12px var(--mono);
+  color: var(--muted);
+}
+.tour ol {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+.tour li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+}
+.tour li:hover {
+  background: var(--panel-2);
+}
+.tour li b {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.tour li button {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--blue-ink);
+  font: 500 12px var(--sans);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tour li button:hover {
+  color: var(--text);
+}
+.tour-tick {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--line-3);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+.tour li.is-done .tour-tick {
+  background: var(--up);
+  border-color: transparent;
+  color: #05140e;
+}
+.tour li.is-done b {
+  color: var(--muted);
+}
+
+/* ---------- the browser window ---------- */
+.bw {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 178px);
+  min-height: 700px;
+  max-height: 980px;
+  border: 1px solid #2c2f37;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1e2026;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+.bw-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 7px 8px 0;
+  background: #17181d;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bw-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 220px;
+  min-width: 0;
+  padding: 8px 14px 9px;
+  border: 0;
+  border-radius: 9px 9px 0 0;
+  background: transparent;
+  color: #9ba0ab;
+  font: 500 12.5px var(--sans);
+  cursor: pointer;
+}
+.bw-tab:hover {
+  background: #1f2127;
+}
+.bw-tab[aria-selected='true'] {
+  background: #282b32;
+  color: #eceef1;
+}
+.bw-tab span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bw-fav {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+.bw-fav-coin {
+  border-radius: 4px;
+  background: var(--buy);
+  color: #0a0914;
+  font: 700 9px/14px var(--mono);
+  text-align: center;
+}
+.bw-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 12px;
+  background: #282b32;
+  border-bottom: 1px solid #101115;
+}
+.bw-nav {
+  display: flex;
+  gap: 8px;
+  color: #666b78;
+}
+.bw-url {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #1a1b20;
+  color: #9ba0ab;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bw-url b {
+  color: #eceef1;
+  font-weight: 500;
+}
+.bw-ext {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+.bw-ext:hover,
+.bw-ext[aria-expanded='true'] {
+  background: #393d47;
+}
+.bw-badge {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: #5ee6b5;
+  color: #04140e;
+  font: 700 9.5px/14px system-ui, sans-serif;
+}
+.bw-view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #0b0c0f;
+}
+.bw-page {
+  min-height: 100%;
+  background: var(--t-bg);
+}
+.bw-page .t-page {
+  min-height: 100%;
+}
+.bw-popup {
+  position: absolute;
+  right: 8px;
+  top: 82px;
+  z-index: 30;
+  max-height: calc(100% - 94px);
+  overflow: auto;
+  border-radius: 10px;
+  background: var(--t-bg);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  animation: bw-pop 0.14s ease-out both;
+}
+@keyframes bw-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.bw-note {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 40;
+  transform: translateX(-50%);
+  max-width: min(560px, calc(100% - 32px));
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #eceef1;
+  color: #121318;
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  animation: bw-pop 0.18s ease-out both;
+}
+
+/* ---------- the pretend trading app (laid out like a fomo coin page) ---------- */
+.fx {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #0b0c0f;
+  color: #eceef2;
+  font-family: var(--sans);
+}
+.fx[hidden] {
+  display: none;
+}
+.fx-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 52px;
+  padding: 0 18px;
+  border-bottom: 1px solid #1b1d22;
+}
+.fx-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #7c808b;
+}
+.fx-brand i {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: #262930;
+}
+.fx-search {
+  flex: 0 1 300px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #15171b;
+  color: #61656f;
+  font-size: 13px;
+}
+.fx-cash {
+  margin-left: auto;
+  font: 600 13.5px var(--mono);
+  font-stretch: 87.5%;
+}
+.fx-cash small {
+  margin-right: 4px;
+  font: 500 12px var(--sans);
+  color: #6b7080;
+}
+.fx-me {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5b9cff, #a77bff);
+}
+.fx-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  padding: 16px 18px 18px;
+  min-height: 0;
+}
+.fx-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.fx-coin {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fx-av {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--buy);
+  color: #0a0914;
+  font: 700 16px var(--mono);
+}
+.fx-name b {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+}
+.fx-name span {
+  color: #8b8f99;
+  font-size: 12.5px;
+}
+.fx-mc {
+  margin-left: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.fx-mc b {
+  font: 600 22px var(--mono);
+  font-stretch: 87.5%;
+  font-variant-numeric: tabular-nums;
+}
+.fx-mc span {
+  font: 500 13px var(--mono);
+  font-stretch: 87.5%;
+}
+.fx-chart {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #1b1d22;
+  border-radius: 14px;
+  background: #0e0f13;
+  overflow: hidden;
+}
+.fx-tf {
+  display: flex;
+  gap: 4px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #1b1d22;
+  font: 600 12px var(--sans);
+  color: #6b7080;
+}
+.fx-tf span {
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.fx-tf .on {
+  background: #1c1e24;
+  color: #eceef2;
+}
+.fx-tf .fx-tf-k {
+  margin-left: auto;
+}
+
+/* chart */
+.cc {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  touch-action: none;
+  user-select: none;
+}
+.cc svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.cc-grid {
+  stroke: #191b20;
+  stroke-width: 1;
+}
+.cc-axis {
+  fill: #646976;
+  font: 500 10.5px var(--mono);
+}
+.cc-now {
+  stroke: #5c606b;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.cc-tag text,
+.cc-tagtext {
+  fill: #07080b;
+  font: 600 10.5px var(--mono);
+}
+.cc-label {
+  font: 600 11px system-ui, -apple-system, sans-serif;
+  paint-order: stroke;
+  stroke: #0e0f13;
+  stroke-width: 3px;
+}
+.cc-hit {
+  stroke: transparent;
+  stroke-width: 14;
+}
+.cc-line.is-draggable {
+  cursor: ns-resize;
+}
+.cc.is-dragging,
+.cc.is-dragging * {
+  cursor: ns-resize;
+}
+
+.fx-pos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid #1b1d22;
+  border-radius: 14px;
+}
+.fx-pos > div {
+  padding: 11px 14px;
+}
+.fx-pos > div + div {
+  border-left: 1px solid #1b1d22;
+}
+.fx-pos small {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 12px;
+  color: #6b7080;
+}
+.fx-pos b {
+  font: 600 14.5px var(--mono);
+  font-stretch: 87.5%;
+  font-variant-numeric: tabular-nums;
+}
+.fx-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* trade panel: tabs, a big $ box, four presets, Max, one button */
+.fx-trade-in {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #1f2127;
+  border-radius: 16px;
+}
+.fx-sides {
+  display: flex;
+  gap: 8px;
+}
+.fx-sides button {
+  flex: 1;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #15171b;
+  color: #8b8f99;
+  font: 700 15px var(--sans);
+  cursor: pointer;
+}
+.fx-sides button.is-buy {
+  background: rgba(46, 189, 133, 0.14);
+  color: #2ebd85;
+}
+.fx-sides button.is-sell {
+  background: rgba(246, 70, 93, 0.14);
+  color: #f6465d;
+}
+.fx-gear {
+  width: 30px;
+  display: grid;
+  place-items: center;
+  color: #5d616c;
+}
+.fx-amount {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #15171b;
+  font-size: 28px;
+  cursor: text;
+}
+.fx-amount:focus-within {
+  border-color: #2a2d35;
+}
+.fx-cur {
+  color: #5d616c;
+}
+.fx-amount input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: #eceef2;
+  font: 500 28px var(--sans);
+}
+.fx-amount input::placeholder {
+  color: #5d616c;
+}
+.fx-hint {
+  font-size: 12.5px;
+  color: #6b7080;
+  white-space: nowrap;
+}
+.fx-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.fx-presets button {
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: #15171b;
+  color: #eceef2;
+  font: 700 13px var(--sans);
+  cursor: pointer;
+}
+.fx-presets button:hover {
+  background: #1d1f24;
+}
+.fx-presets button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.fx-avail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #8b8f99;
+}
+.fx-avail b {
+  margin-left: auto;
+  color: #eceef2;
+  font-weight: 600;
+}
+.fx-avail button {
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: #5b9cff;
+  font: 700 12px var(--sans);
+  cursor: pointer;
+}
+.fx-go {
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #2ebd85;
+  color: #06120d;
+  font: 700 15px var(--sans);
+  cursor: pointer;
+}
+.fx-go-sell {
+  background: #f6465d;
+  color: #fff;
+}
+.fx-go:disabled {
+  border: 1px solid #1f2127;
+  background: #15171b;
+  color: #6b7080;
+  cursor: not-allowed;
+}
+.fx-fees,
+.fx-done {
+  padding: 0 8px 2px;
+  font-size: 12px;
+  text-align: center;
+  color: #6b7080;
+}
+.fx-done {
+  color: #2ebd85;
+}
+.fx-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #1b1d22;
+  border: 1px solid #1b1d22;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.fx-stats > div {
+  padding: 10px 12px;
+  background: #0b0c0f;
+}
+.fx-stats dt {
+  margin-bottom: 3px;
+  font-size: 11.5px;
+  color: #6b7080;
+}
+.fx-stats dd {
+  font: 600 13.5px var(--mono);
+  font-stretch: 87.5%;
+}
+
+/* ---------- Tippy on the page, exactly as the extension draws it ---------- */
+.site-demo .tw {
+  width: 324px;
+  zoom: 1;
+  /* below the page's top bar, like on fomo; the window's body scrolls */
+  max-height: max(470px, calc(100vh - 340px));
+}
+.fx .tw-host {
+  position: absolute;
+  z-index: 10;
+}
+.fx-toasts .tw-toasts {
+  position: absolute;
+  top: 62px;
+  z-index: 20;
+}
+
+/* ---------- the pretend phone (Telegram alerts) ---------- */
+.phone {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 60;
+  width: 300px;
+  padding: 12px;
+  border: 1px solid #2b3a48;
+  border-radius: 22px;
+  background: #17212b;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: bw-pop 0.2s ease-out both;
+}
+.phone-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.phone-head b {
+  font-size: 13.5px;
+}
+.phone-head span {
+  font-size: 11px;
+  color: #7f91a4;
+}
+.phone-head button {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: #7f91a4;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.phone p {
+  margin-top: 6px;
+  padding: 9px 11px;
+  border-radius: 12px 12px 12px 4px;
+  background: #182533;
+  color: #f5f5f5;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+/* "Show me": points at the place */
+.dm-flash {
+  outline: 2px solid var(--up) !important;
+  outline-offset: 3px;
+  animation: dm-flash 0.8s ease-in-out 3;
+}
+@keyframes dm-flash {
+  50% {
+    outline-color: transparent;
+  }
+}
+
+@media (max-width: 1399px) {
+  .dm-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dm-side {
+    display: none;
+  }
+  .dm-tour-btn {
+    display: block;
+  }
+}
+@media (max-width: 1100px) {
+  .fx-body {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+@media (max-width: 860px) {
+  .dm-bar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .dm-title {
+    width: 100%;
+  }
+  .dm-tour-btn {
+    margin-left: auto;
+  }
+  .bw {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+  .bw-view {
+    overflow: visible;
+  }
+  /* phones: the page stacks as chart, then Tippy's window, then the trade panel */
+  .fx-body {
+    display: contents;
+  }
+  .fx-main {
+    order: 1;
+    padding: 16px 14px 0;
+  }
+  .fx-chart {
+    min-height: 340px;
+  }
+  .fx .tw-host {
+    order: 2;
+    position: static;
+    width: fit-content;
+    max-width: calc(100% - 28px);
+    margin: 16px auto;
+  }
+  .fx-side {
+    order: 3;
+    padding: 0 14px 16px;
+  }
+  .site-demo .tw {
+    max-height: none;
+    max-width: 100%;
+  }
+  .bw-popup {
+    left: 8px;
+    right: 8px;
+  }
+  .bw-popup .t-popup {
+    width: auto;
+  }
+  .fx-search,
+  .fx-brand {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .wrap-wide,
+  .dm {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .dm-q {
+    min-width: 0;
+  }
+  .dm-market {
+    flex-wrap: wrap;
+  }
+  .bw-tab {
+    flex-basis: 150px;
+  }
+  .bw-nav {
+    display: none;
+  }
+  .fx-mc {
+    margin-left: auto;
+  }
+  .fx-mc b {
+    font-size: 17px;
+  }
+  .fx-pos {
+    grid-template-columns: 1fr 1fr;
+  }
+  .fx-pos > div:nth-child(3) {
+    display: none;
+  }
+  .phone {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}

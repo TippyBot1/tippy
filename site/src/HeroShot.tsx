@@ -1,8 +1,7 @@
-// The hero's product shot is Tippy's real window, live on a pretend $BONKLE bag
-// with three orders on, drawn over its own order lines on one log scale. The
-// switch above it types a level into the window, so you can watch the button go
-// green above the price (take profit), red below it (stop loss), and the Buy tab
-// do the same for a limit buy.
+// The home page's product shot: Tippy's real window on a pretend $BONKLE bag with
+// three orders on, drawn over its own order lines on one log scale, a take profit
+// typed in and ready to add. It's a picture, not a demo: it doesn't move or take
+// clicks, and clicking it opens the demo page (the one place to try Tippy).
 
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { buildPlan } from '@ext/engine/orders';
@@ -10,7 +9,7 @@ import { formatUsd, triggerPrice } from '@ext/engine/triggers';
 import { DEFAULT_PRESETS } from '@ext/shared/settings';
 import { Chat } from '@ext/ui/Chat';
 import { TippyWindow } from '@ext/ui/TippyWindow';
-import { reducedMotion, seedPath, SUPPLY, typeInto, useMarket, wait } from './market';
+import { seedPath, SUPPLY, typeInto, useMarket, wait } from './market';
 
 const START = 0.000412; // $412K
 const ENTRY = 0.0003; // $300K
@@ -27,15 +26,13 @@ const TOP = 2_000_000;
 const BOT = 170_000;
 const yPct = (mc: number) => 5 + ((Math.log(TOP) - Math.log(mc)) / Math.log(TOP / BOT)) * 88;
 
-export function HeroStage() {
+export function HeroShot() {
   const m = useMarket({
     symbol: 'BONKLE',
     name: 'Bonkle (example)',
     startPrice: START,
     startBag: 250_000,
     startCash: 25,
-    vol: 0.006,
-    tickMs: 2_400,
     seedHistory: () => seedPath(START, ENTRY * 0.97, 70, 5),
     seedPlan: (base) => {
       const p = buildPlan({
@@ -86,7 +83,12 @@ export function HeroStage() {
 
   useEffect(() => {
     let live = true;
-    show('tp').finally(() => live && setReady(true));
+    // Type the take profit in, then freeze the window: from here on it's a picture.
+    show('tp').finally(() => {
+      if (!live) return;
+      setReady(true);
+      if (box.current) box.current.inert = true;
+    });
     // never leave the window hidden, whatever happens
     const t = setTimeout(() => live && setReady(true), 900);
     return () => {
@@ -94,26 +96,6 @@ export function HeroStage() {
       clearTimeout(t);
     };
   }, []);
-
-  // The example coin drifts only while the hero is on screen, and never with reduced motion.
-  useEffect(() => {
-    const el = stage.current;
-    if (!el || reducedMotion() || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([e]) => m.setAuto(e.isIntersecting));
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  // Once you type or tap in the window yourself, the preview line is yours, not ours.
-  const mine = (e: Event) => {
-    if (e.isTrusted && !busy.current) setStep(null);
-  };
-  // ...and once an order is added (by mouse, keyboard or chat), the real line replaces the preview.
-  const count = (m.plan ? m.plan.tps.length + (m.plan.stops ?? []).length + (m.plan.sl ? 1 : 0) : 0) + m.buys.length;
-  const firstCount = useRef(count);
-  useEffect(() => {
-    if (count !== firstCount.current) setStep(null);
-  }, [count]);
 
   const plan = m.plan && (m.plan.state === 'armed' || m.plan.state === 'paused') ? m.plan : null;
   const lines: { mc: number; tone: string; tag: string; note?: string }[] = [];
@@ -174,15 +156,7 @@ export function HeroStage() {
       )}
 
       <div class="stage-ui">
-        <div class="switch" role="group" aria-label="Show an order in Tippy's window">
-          {(Object.keys(STEPS) as Step[]).map((s) => (
-            <button key={s} class={`switch-${s}`} aria-pressed={step === s} onClick={(e) => show(s, e.currentTarget, e.detail > 0)}>
-              <i aria-hidden="true" />
-              {STEPS[s].name}
-            </button>
-          ))}
-        </div>
-        <div class={`stage-window tippy${ready ? '' : ' is-pending'}`} ref={box} onInput={mine} onPointerDown={mine}>
+        <div class={`stage-window tippy${ready ? '' : ' is-pending'}`} ref={box}>
           <TippyWindow
             key={m.plan?.id ?? 'new'}
             token={m.token}
@@ -196,12 +170,13 @@ export function HeroStage() {
             defaultPresetId="classic"
             api={m.api}
             intro={false}
-            toggles={m.toggles}
-            onToggle={(name, v) => m.setToggles((t) => ({ ...t, [name]: v }))}
+            toggles={{ autoGuard: false, dryRun: false, alerts: true, stayAwake: true }}
             chat={<Chat ctx={m.chatCtx} placeholder="Ask Tippy… e.g. sell 50% at 2x" />}
           />
         </div>
-        <p class="stage-caption">Tippy’s real window, running live on an example coin.</p>
+        <a class="stage-caption" href="/demo">
+          Tippy’s real window, on an example coin. <b>Try it in the demo →</b>
+        </a>
       </div>
     </div>
   );

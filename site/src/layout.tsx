@@ -1,5 +1,18 @@
-// Shared page chrome for tippybot.fun: nav, footer, the install button and icons.
+// Shared page chrome for tippybot.fun: nav, footer, page headings, the install
+// button and icons. Every page is its own HTML file; the nav marks where you are.
+import type { ComponentChildren } from 'preact';
 import { EMAIL, GITHUB_URL, STORE_LIVE, STORE_URL } from './links';
+
+export type PageId = 'home' | 'how' | 'features' | 'demo' | 'safety' | 'faq' | 'privacy';
+
+/** The site's pages in reading order: the nav, the footer and the "Next" links all use it. */
+export const PAGES: { id: Exclude<PageId, 'home' | 'privacy'>; href: string; label: string; blurb: string }[] = [
+  { id: 'how', href: '/how', label: 'How it works', blurb: 'Add it, open a coin, type a level.' },
+  { id: 'features', href: '/features', label: 'Features', blurb: 'Every order type, chat, chart lines and alerts.' },
+  { id: 'demo', href: '/demo', label: 'Demo', blurb: 'Use Tippy on a pretend coin page laid out like fomo.' },
+  { id: 'safety', href: '/safety', label: 'Safety', blurb: 'What Chrome asks, and what Tippy can’t do.' },
+  { id: 'faq', href: '/faq', label: 'FAQ', blurb: 'Laptop asleep, slippage, phones, cost.' },
+];
 
 export function Arrow() {
   return (
@@ -22,7 +35,7 @@ export function GitHubGlyph() {
 
 /**
  * The store call to action. Until the listing is live (links.ts) it is a status,
- * not a button: outlined, no fill, nothing to click. GitHub is the action then.
+ * not a button: outlined, no fill, nothing to click.
  */
 export function InstallCta() {
   if (!STORE_LIVE) {
@@ -42,59 +55,70 @@ export function InstallCta() {
   );
 }
 
-export function GitHubButton({ primary = false }: { primary?: boolean }) {
+export function GitHubButton() {
   return (
-    <a class={`pill ${primary ? 'pill-primary' : 'pill-ghost'}`} href={GITHUB_URL} target="_blank" rel="noopener">
-      <GitHubGlyph /> {primary ? 'Read the code on GitHub' : 'GitHub'} <Arrow />
+    <a class="pill pill-ghost" href={GITHUB_URL} target="_blank" rel="noopener">
+      <GitHubGlyph /> GitHub <Arrow />
     </a>
   );
 }
 
-/** The hero and closing buttons: the store first once it's live; until then GitHub is the one real action. */
+/** The demo is the one place to try Tippy; until the store listing is live it's the main action. */
+export function DemoButton({ primary = true }: { primary?: boolean }) {
+  return (
+    <a class={`pill ${primary ? 'pill-primary' : 'pill-ghost'}`} href="/demo">
+      Try the demo <span aria-hidden="true">→</span>
+    </a>
+  );
+}
+
 export function Ctas() {
   return STORE_LIVE ? (
     <div class="ctas">
       <InstallCta />
-      <GitHubButton />
+      <DemoButton primary={false} />
     </div>
   ) : (
     <div class="ctas">
-      <GitHubButton primary />
+      <DemoButton />
+      <GitHubButton />
       <InstallCta />
     </div>
   );
 }
 
-const SECTIONS: [string, string][] = [
-  ['how', 'How it works'],
-  ['features', 'Features'],
-  ['demo', 'Demo'],
-  ['safety', 'Safety'],
-  ['faq', 'FAQ'],
-];
-
-export function Nav({ home }: { home: boolean }) {
-  const to = (id: string) => (home ? `#${id}` : `/#${id}`);
+export function Nav({ current }: { current: PageId }) {
   return (
     <header class="nav">
       <div class="wrap nav-in">
-        <a class="brand" href={home ? '#top' : '/'} aria-label="Tippy, home">
+        <a class="brand" href="/" aria-label="Tippy, home" aria-current={current === 'home' ? 'page' : undefined}>
           <img src="/favicon.svg" alt="" width="24" height="24" />
           <span class="brand-word">tippy</span>
           <span class="brand-tag">for fomo</span>
         </a>
-        <nav class="nav-links" aria-label="Sections">
-          {SECTIONS.map(([id, label]) => (
-            <a key={id} href={to(id)}>
-              {label}
+        <nav class="nav-links" aria-label="Pages">
+          {PAGES.map((p) => (
+            <a key={p.id} href={p.href} class={p.id === 'demo' ? 'nav-demo' : undefined} aria-current={current === p.id ? 'page' : undefined}>
+              {p.label}
             </a>
           ))}
         </nav>
-        <nav class="nav-short" aria-label="Jump to">
-          <a href={to('demo')}>Demo</a>
-          <a href={to('faq')}>FAQ</a>
-        </nav>
-        <a class="pill pill-ghost pill-sm" href={GITHUB_URL} target="_blank" rel="noopener">
+        <details class="nav-menu">
+          <summary aria-label="Menu">
+            <span aria-hidden="true" />
+          </summary>
+          <nav aria-label="Pages">
+            {PAGES.map((p) => (
+              <a key={p.id} href={p.href} aria-current={current === p.id ? 'page' : undefined}>
+                {p.label}
+              </a>
+            ))}
+            <a href={GITHUB_URL} target="_blank" rel="noopener">
+              GitHub <Arrow />
+            </a>
+          </nav>
+        </details>
+        <a class="pill pill-ghost pill-sm nav-gh" href={GITHUB_URL} target="_blank" rel="noopener">
           <GitHubGlyph /> GitHub
         </a>
       </div>
@@ -102,8 +126,7 @@ export function Nav({ home }: { home: boolean }) {
   );
 }
 
-export function Footer({ home }: { home: boolean }) {
-  const to = (id: string) => (home ? `#${id}` : `/#${id}`);
+export function Footer() {
   return (
     <footer class="footer">
       <div class="wrap foot-grid">
@@ -116,9 +139,9 @@ export function Footer({ home }: { home: boolean }) {
         </div>
         <div class="foot-col">
           <p class="foot-h">Product</p>
-          {SECTIONS.map(([id, label]) => (
-            <a key={id} href={to(id)}>
-              {label}
+          {PAGES.map((p) => (
+            <a key={p.id} href={p.href}>
+              {p.label}
             </a>
           ))}
         </div>
@@ -137,5 +160,55 @@ export function Footer({ home }: { home: boolean }) {
         <span>Tippy is an independent project and is not affiliated with or endorsed by fomo.</span>
       </div>
     </footer>
+  );
+}
+
+/** Every page: skip link, nav, the page, footer. */
+export function Page({ current, children, class: cls }: { current: PageId; children: ComponentChildren; class?: string }) {
+  return (
+    <div class={`site${cls ? ` ${cls}` : ''}`}>
+      <a class="skip" href="#main">
+        Skip to content
+      </a>
+      <Nav current={current} />
+      <main id="main">{children}</main>
+      <Footer />
+    </div>
+  );
+}
+
+/** An inner page's heading: one h1, a lead, an optional aside on the right. */
+export function PageHead({ eyebrow, title, lead, children }: { eyebrow: string; title: ComponentChildren; lead: ComponentChildren; children?: ComponentChildren }) {
+  return (
+    <header class="page-head">
+      <div class="wrap page-head-in">
+        <div>
+          <p class="eyebrow">{eyebrow}</p>
+          <h1>{title}</h1>
+          <p class="page-lead">{lead}</p>
+        </div>
+        {children && <div class="page-head-aside">{children}</div>}
+      </div>
+    </header>
+  );
+}
+
+/** The bottom of an inner page: on to the next one, so the site reads in order. */
+export function NextPage({ from }: { from: PageId }) {
+  const i = PAGES.findIndex((p) => p.id === from);
+  const next = PAGES[i + 1];
+  if (!next) return null;
+  return (
+    <nav class="next-page" aria-label="Next page">
+      <div class="wrap">
+        <a href={next.href}>
+          <span class="next-k">Next</span>
+          <b>
+            {next.label} <span aria-hidden="true">→</span>
+          </b>
+          <span class="next-blurb">{next.blurb}</span>
+        </a>
+      </div>
+    </nav>
   );
 }

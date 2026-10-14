@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["vite/client"],
-    "paths": { "@ext/*": ["../extension/src/*"] }
+    "paths": { "@ext/*": ["../extension/src/*"], "wxt/browser": ["./src/demo/sim/browser.ts"] }
   },
   "include": ["src"]
 }

@@ -1,16 +1,12 @@
 import { render } from 'preact';
-import './site.css';
-import { Footer, Nav } from './layout';
-import { EMAIL, GITHUB_URL } from './links';
+import '../site.css';
+import { Page } from '../layout';
+import { EMAIL, GITHUB_URL } from '../links';
 
 function Privacy() {
   return (
-    <div class="site">
-      <a class="skip" href="#main">
-        Skip to content
-      </a>
-      <Nav home={false} />
-      <main id="main" class="doc">
+    <Page current="privacy">
+      <div class="doc">
         <div class="wrap">
           <header class="doc-head">
             <p class="eyebrow">Privacy</p>
@@ -92,9 +88,8 @@ function Privacy() {
             </ul>
           </section>
         </div>
-      </main>
-      <Footer home={false} />
-    </div>
+      </div>
+    </Page>
   );
 }
 
