@@ -119,6 +119,10 @@ function Closing() {
   );
 }
 
+// Links to the old one-page site (tippybot.fun/#safety) go to that section's page now.
+const OLD = location.hash.slice(1);
+if (['how', 'features', 'demo', 'safety', 'faq'].includes(OLD)) location.replace(`/${OLD}`);
+
 render(
   <Page current="home">
     <Hero />
