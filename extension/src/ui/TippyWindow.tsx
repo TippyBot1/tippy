@@ -303,6 +303,7 @@ export function TippyWindow({
   note,
   notice,
   showTrailing = false,
+  panel,
   chat,
 }: {
   token: WindowToken;
@@ -339,6 +340,8 @@ export function TippyWindow({
   notice?: WindowNotice | null;
   /** settings.showTrailing: offer the trailing stop (it's always shown when the plan has one). */
   showTrailing?: boolean;
+  /** A box under the header (phone alerts: TelegramConnect), shown until it closes itself. */
+  panel?: ComponentChildren;
   /** 💬 The chat box (ui/Chat), shown at the very bottom of the window. */
   chat?: ComponentChildren;
 }) {
@@ -434,6 +437,8 @@ export function TippyWindow({
           </button>
         </div>
       )}
+
+      {panel}
 
       <div class="tw-modes" role="tablist" aria-label="Buy or sell">
         <button role="tab" class="tw-mode tw-mode-buy" aria-selected={mode === 'buy'} onClick={() => switchMode('buy')}>

@@ -3,7 +3,8 @@ import { buildBuy, cancelBuy, moveBuy, pruneBuys, resolveUnknownBuy, validateBuy
 import { buildPlan, cancelPlan, editPlan, getLevel, pausePlan, resolveHeld, resumePlan, retryLevel, undoDryRunFills } from '../engine/orders';
 import { validatePlanInput } from '../engine/triggers';
 import type { SellAction } from '../engine/types';
-import { notify } from '../shared/alerts';
+import { linkStatus, newLinkId, notify } from '../shared/alerts';
+import { telegramLink } from '../shared/config';
 import type { Command, CommandResult } from '../shared/messages';
 import { load, save } from '../shared/store';
 import { withLock } from './lock';
@@ -247,6 +248,50 @@ export async function handleCommand(cmd: Command, from: { tabId?: number } = {})
       });
       return { ok: true };
     }
+    case 'TELEGRAM_CONNECT': {
+      // A link that's still waiting is kept, so a code already on screen (or scanned) keeps working.
+      const telegram = await withLock(async () => {
+        const { settings } = await load('settings');
+        if (settings.telegram.linked && settings.telegram.linkId) return { url: telegramLink(settings.telegram.linkId), linked: true };
+        const linkId = settings.telegram.linkId ?? newLinkId();
+        await save({ settings: { ...settings, telegram: { linkId, linked: false } } });
+        return { url: telegramLink(linkId), linked: false };
+      });
+      return { ok: true, telegram };
+    }
+    case 'TELEGRAM_CHECK': {
+      const { settings } = await load('settings');
+      const { linkId, linked } = settings.telegram;
+      if (!linkId) return { ok: true, telegram: { url: null, linked: false } };
+      if (linked || !(await linkStatus(linkId))) return { ok: true, telegram: { url: telegramLink(linkId), linked } };
+      const fresh = await withLock(async () => {
+        const { settings: s } = await load('settings');
+        if (s.telegram.linkId !== linkId) return null; // unlinked or restarted meanwhile
+        const next = { ...s, telegram: { linkId, linked: true } };
+        await save({ settings: next });
+        return next;
+      });
+      if (!fresh) return { ok: true, telegram: { url: null, linked: false } };
+      await notify(fresh, 'test', {
+        key: '',
+        title: '📱 Tippy is on your phone',
+        text: 'Alerts are working. You’ll get a message here when an order fills, when Tippy needs you, or if it stops watching.',
+        tone: 'info',
+      });
+      return { ok: true, telegram: { url: telegramLink(linkId), linked: true } };
+    }
+    case 'TELEGRAM_OPEN': {
+      const { settings } = await load('settings');
+      if (!settings.telegram.linkId) return { ok: false, error: 'Press Connect Telegram first.' };
+      await browser.tabs.create({ url: telegramLink(settings.telegram.linkId) });
+      return { ok: true };
+    }
+    case 'TELEGRAM_DISCONNECT':
+      await withLock(async () => {
+        const { settings } = await load('settings');
+        await save({ settings: { ...settings, telegram: { linkId: null, linked: false } } });
+      });
+      return { ok: true };
     case 'OPEN_OPTIONS':
       await browser.tabs.create({ url: browser.runtime.getURL(`/options.html${cmd.section ? `#${cmd.section}` : ''}`) });
       return { ok: true };

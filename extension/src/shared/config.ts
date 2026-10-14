@@ -3,6 +3,8 @@ export const SITE_URL = 'https://tippybot.fun';
 export const STATUS_URL = `${SITE_URL}/status.json`;
 export const ALERTS_URL: string = import.meta.env.WXT_ALERTS_URL ?? 'https://alerts.tippybot.fun';
 export const TELEGRAM_BOT = 'TippyAlertsBot';
+/** The one-time link that connects a Telegram chat to this browser's Tippy. */
+export const telegramLink = (linkId: string) => `https://t.me/${TELEGRAM_BOT}?start=${linkId}`;
 
 /**
  * fomo's trade minimums (USD) when /config can't be read. Live values 2026-10-12:

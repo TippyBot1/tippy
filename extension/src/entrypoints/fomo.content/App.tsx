@@ -16,6 +16,7 @@ import { healthText, moodFor } from '../../ui/format';
 import { Mascot } from '../../ui/Mascot';
 import { PlanList } from '../../ui/PlanList';
 import { levelProblem, stopOrderNote } from '../../ui/levels';
+import { TelegramConnect } from '../../ui/TelegramConnect';
 import { Toasts } from '../../ui/Toasts';
 import { TippyPill, TippyWindow, type WindowNotice, type WindowToggles, type WindowToken } from '../../ui/TippyWindow';
 
@@ -221,6 +222,8 @@ export function App({ ctx }: { ctx: ContentScriptContext }) {
   // ---- Tippy's levels on fomo's chart (drawn by the main-world chart script) ----
   const [chartNonce, setChartNonce] = useState(0);
   const [dragged, setDragged] = useState<{ move: ChartMove; line: ChartLine } | null>(null);
+  /** The 🔔 phone-alerts box in the window. */
+  const [phone, setPhone] = useState(false);
   const [moveState, setMoveState] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
   const chartLines = useMemo(
     () => (state && here && state.settings.chartLines !== false ? chartLinesFor(here.key, Object.values(state.plans), Object.values(state.buys)) : []),
@@ -285,7 +288,7 @@ export function App({ ctx }: { ctx: ContentScriptContext }) {
     if (name === 'autoGuard') send({ type: 'SET_SETTINGS', patch: { autoGuard: { ...settings.autoGuard, enabled: v } } });
     else if (name === 'dryRun') send({ type: 'SET_SETTINGS', patch: { dryRun: v } });
     else if (name === 'stayAwake') send({ type: 'SET_SETTINGS', patch: { stayAwake: v } });
-    else send({ type: 'OPEN_OPTIONS', section: 'alerts' });
+    else setPhone((v) => !v); // 🔔 phone alerts: connect (or check) right in the window
   };
   const minimize = () => (here ? savePrefs({ ...prefs, minimized: true }) : setManualOpen(false));
   const restore = () => (here ? savePrefs({ ...prefs, minimized: false }) : setManualOpen(true));
@@ -415,6 +418,7 @@ export function App({ ctx }: { ctx: ContentScriptContext }) {
             dragHandle={drag(false)}
             note={settings.dryRun ? 'Dry run is on — Tippy won’t actually buy or sell' : undefined}
             notice={notice}
+            panel={phone ? <TelegramConnect settings={settings} compact onClose={() => setPhone(false)} /> : null}
             levelUnit={settings.levelUnit}
             onLevelUnit={(levelUnit) => send({ type: 'SET_SETTINGS', patch: { levelUnit } })}
             chat={<Chat ctx={chatCtx} />}

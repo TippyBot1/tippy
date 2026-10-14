@@ -2,13 +2,13 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
-import { linkStatus, newLinkId } from '../../shared/alerts';
-import { SITE_URL, TELEGRAM_BOT } from '../../shared/config';
+import { SITE_URL } from '../../shared/config';
 import type { Preset, Settings } from '../../shared/settings';
 import { DEFAULT_PRESETS } from '../../shared/settings';
 import { presetBlurb } from '../LimitBuy';
 import { send, useTippyState } from '../bridge';
 import { Mascot } from '../Mascot';
+import { TelegramConnect } from '../TelegramConnect';
 
 const set = (patch: Partial<Settings>) => send({ type: 'SET_SETTINGS', patch });
 
@@ -119,7 +119,8 @@ export function SettingsPage() {
 
         <section class="t-panel" id="alerts">
           <h2>Alerts</h2>
-          <p>Tippy always pops up inside fomo’s page when an order fills or expires. Turn these on to hear about it anywhere.</p>
+          <p>Tippy always pops up inside fomo’s page when an order fills or expires. Connect Telegram to hear about it on your phone, wherever you are.</p>
+          <TelegramConnect settings={s} />
           <Setting
             title="Desktop notifications"
             help="A pop-up on this computer when Tippy buys or sells for you, or an order expires — click it to open the coin. Nothing showing on a Mac? Allow Google Chrome in System Settings → Notifications."
@@ -141,7 +142,6 @@ export function SettingsPage() {
               />
             </div>
           </Setting>
-          <TelegramLink settings={s} />
         </section>
 
         <section class="t-panel">
@@ -276,56 +276,3 @@ function PresetEditor({ slot, preset, isDefault, onDefault, onChange }: { slot: 
     </div>
   );
 }
-
-function TelegramLink({ settings }: { settings: Settings }) {
-  const [waiting, setWaiting] = useState(false);
-  const { linkId, linked } = settings.telegram;
-
-  useEffect(() => {
-    if (!waiting || !linkId) return;
-    let tries = 0;
-    const t = setInterval(async () => {
-      tries++;
-      if (await linkStatus(linkId)) {
-        clearInterval(t);
-        setWaiting(false);
-        await set({ telegram: { linkId, linked: true } });
-        await send({ type: 'TEST_ALERT' });
-      } else if (tries > 90) {
-        clearInterval(t);
-        setWaiting(false);
-      }
-    }, 2_000);
-    return () => clearInterval(t);
-  }, [waiting, linkId]);
-
-  const connect = async () => {
-    const id = newLinkId();
-    await set({ telegram: { linkId: id, linked: false } });
-    await browser.tabs.create({ url: `https://t.me/${TELEGRAM_BOT}?start=${id}` });
-    setWaiting(true);
-  };
-
-  if (linked) {
-    return (
-      <Setting title="Telegram ✓ connected" help={`Tippy messages you from @${TELEGRAM_BOT}. It never messages first and never sends login links.`}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button class="t-btn t-btn-ghost" onClick={() => send({ type: 'TEST_ALERT' })}>
-            Send a test
-          </button>
-          <button class="t-btn t-btn-danger" onClick={() => set({ telegram: { linkId: null, linked: false } })}>
-            Disconnect
-          </button>
-        </div>
-      </Setting>
-    );
-  }
-  return (
-    <Setting title="Telegram" help={waiting ? 'Tap Start in Telegram — Tippy is waiting for you…' : 'Get a ping when Tippy sells, needs you, or stops watching (e.g. your laptop went to sleep).'}>
-      <button class="t-btn t-btn-primary" style={{ width: 'auto' }} onClick={connect} disabled={waiting}>
-        {waiting ? 'Waiting…' : 'Connect Telegram'}
-      </button>
-    </Setting>
-  );
-}
-

@@ -43,6 +43,10 @@ export interface World {
   power: string[];
   /** Scripted balance reads: each BALANCES call takes the next list (then falls back to `holdings`). */
   balancesSeq: Holding[][];
+  /** Telegram link ids someone tapped Start on (what the alerts server would say). */
+  telegramStarted: string[];
+  /** newLinkId() results, in order. */
+  linkIds: string[];
 }
 
 function newWorld(): World {
@@ -64,6 +68,8 @@ function newWorld(): World {
     deadTabs: new Set(),
     power: [],
     balancesSeq: [],
+    telegramStarted: [],
+    linkIds: ['link-1', 'link-2', 'link-3'],
   };
 }
 
@@ -183,8 +189,8 @@ export const fakeAlerts = {
   async heartbeat(_settings: Settings, armed: number) {
     world.heartbeats.push(armed);
   },
-  newLinkId: () => 'link',
-  linkStatus: async () => false,
+  newLinkId: () => world.linkIds.shift() ?? 'link-x',
+  linkStatus: async (id: string) => world.telegramStarted.includes(id),
 };
 
 async function relay<T>(tabId: number, req: RelayRequest): Promise<RelayResponse<T>> {

@@ -551,3 +551,84 @@
 .t-overlay .t-card {
   width: min(360px, calc(100vw - 32px));
 }
+
+/* ---------- phone alerts (TelegramConnect): settings, welcome and the window ---------- */
+.t-tg {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+}
+.t-tg-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.t-tg-copy small {
+  color: var(--t-muted);
+  font-size: 12.5px;
+}
+.t-tg-copy ol {
+  margin: 2px 0 2px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.t-tg-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: none;
+}
+.t-tg-acts .t-btn {
+  width: auto;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.t-tg-code {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+.t-tg-code .t-tg-acts {
+  margin-top: 6px;
+}
+.t-tg-wait {
+  color: var(--t-mint) !important;
+}
+.t-tg-err {
+  color: var(--t-amber) !important;
+}
+.t-qr {
+  flex: none;
+  display: block;
+  border-radius: 10px;
+  background: #fff;
+}
+/* in Tippy's window: narrow, so the box stacks */
+.t-tg-compact {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid var(--t-line);
+  background: var(--t-surface-2);
+}
+.t-tg-compact.t-tg-code {
+  flex-direction: row;
+  gap: 10px;
+}
+.t-tg-compact .t-tg-copy small,
+.t-tg-compact .t-tg-copy ol {
+  font-size: 11.5px;
+}
+.t-tg-compact .t-tg-acts {
+  gap: 6px;
+}
+.t-tg-compact .t-tg-acts .t-btn {
+  padding: 6px 9px;
+  font-size: 11.5px;
+  border-radius: 9px;
+}
+.t-tg-compact .t-btn-ghost {
+  background: var(--t-surface-3);
+}

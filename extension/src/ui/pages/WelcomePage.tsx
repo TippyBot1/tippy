@@ -4,6 +4,7 @@ import { browser } from 'wxt/browser';
 import type { RelayResponse } from '../../shared/messages';
 import { send, useTippyState } from '../bridge';
 import { Mascot } from '../Mascot';
+import { TelegramConnect } from '../TelegramConnect';
 
 const isEdge = navigator.userAgent.includes('Edg/');
 
@@ -119,15 +120,7 @@ export function WelcomePage() {
         </div>
 
         <div class="t-panel">
-          <div class="t-setting">
-            <div>
-              <b>Optional: alerts on your phone 📱</b>
-              <small>Get a Telegram ping when I sell — and a warning if your computer goes to sleep while your orders are on.</small>
-            </div>
-            <button class="t-btn t-btn-ghost" onClick={() => browser.tabs.create({ url: browser.runtime.getURL('/options.html#alerts') })}>
-              Set up
-            </button>
-          </div>
+          <TelegramConnect settings={s} />
         </div>
 
         <div class="t-promise">

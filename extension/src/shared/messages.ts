@@ -155,11 +155,16 @@ export type Command =
   | { type: 'PAUSE_ALL'; paused: boolean }
   | { type: 'OPEN_DESK' }
   | { type: 'TEST_ALERT' }
+  /** Phone alerts: make (or reuse) the one-time Telegram link, see if it was used, open it here, or unlink. */
+  | { type: 'TELEGRAM_CONNECT' }
+  | { type: 'TELEGRAM_CHECK' }
+  | { type: 'TELEGRAM_OPEN' }
+  | { type: 'TELEGRAM_DISCONNECT' }
   | { type: 'OPEN_OPTIONS'; section?: string }
   | { type: 'HELLO'; url: string };
 
 export type CommandResult =
-  | { ok: true; plan?: Plan; buy?: BuyOrder; practice?: PracticeResult }
+  | { ok: true; plan?: Plan; buy?: BuyOrder; practice?: PracticeResult; telegram?: { url: string | null; linked: boolean } }
   /** stale: the plan changed under the user (reload the draft). */
   | { ok: false; error: string; stale?: boolean };
 
