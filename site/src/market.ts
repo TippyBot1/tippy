@@ -18,6 +18,17 @@ export const SUPPLY = 1_000_000_000;
 export const MIN_USD = 2;
 const NETWORK = 1399811149;
 
+/** A trade on the pretend coin: yours from the trade panel, or one Tippy made for you. */
+export interface Swap {
+  id: number;
+  /** The price tick it happened on (for the chart marker). */
+  tick: number;
+  side: 'buy' | 'sell';
+  usd: number;
+  mc: number;
+  by: 'you' | 'tippy';
+}
+
 /** A nudge from the demo itself ("now move the market"), never one of Tippy's own messages. */
 export interface Hint {
   id: number;
@@ -49,6 +60,7 @@ export interface MarketConfig {
 
 let hintId = 0;
 let noticeId = 0;
+let swapId = 0;
 
 /** A deterministic random walk that ends exactly at `end` (no Math.random, so every visit looks the same). */
 export function seedPath(end: number, from: number, n = 90, seed = 7): number[] {
@@ -89,6 +101,9 @@ export function useMarket(cfg: MarketConfig) {
   /** Tippy's own pop-ups ("Tippy filled order"), in the extension's format. */
   const [notices, setNotices] = useState<Notice[]>([]);
   const [hint, setHint] = useState<Hint | null>(null);
+  const [swaps, setSwaps] = useState<Swap[]>([]);
+  /** Price ticks so far; each one is a candle on the demo's chart. */
+  const tickNo = useRef(0);
   const [auto, setAuto] = useState(!!cfg.autoStart);
   const target = useRef<number | null>(null);
   const settingsNow = () => cfg.getSettings?.() ?? DEFAULT_SETTINGS;
@@ -98,6 +113,7 @@ export function useMarket(cfg: MarketConfig) {
 
   const notice = (n: NoticeText) => setNotices((xs) => [...xs.slice(-9), { ...n, id: `n${++noticeId}`, at: Date.now() }]);
   const nudge = (text: string) => setHint({ id: ++hintId, text });
+  const swap = (s: Omit<Swap, 'id' | 'tick'>) => setSwaps((xs) => [...xs.slice(-29), { ...s, id: ++swapId, tick: tickNo.current }]);
 
   const token: WindowToken = {
     key,
@@ -122,6 +138,7 @@ export function useMarket(cfg: MarketConfig) {
       p = p * Math.exp((Math.random() - 0.48) * vol);
     }
     p = Math.max(cfg.startPrice * 0.05, p);
+    tickNo.current++;
     setPrice(p);
     setHistory((h) => [...h.slice(-(H - 1)), p]);
 
@@ -144,6 +161,7 @@ export function useMarket(cfg: MarketConfig) {
         const sold = b - a.targetRemaining;
         b = a.targetRemaining;
         c += sold * p;
+        swap({ side: 'sell', usd: sold * p, mc: p * SUPPLY, by: 'tippy' });
         pl = applyOutcome(pl, a.level, { status: 'filled', balanceAfter: b, soldAmount: sold }, now);
         notice(sellFilledNotice(pl, a.level, { soldPct: pl.origBalance > 0 ? (sold / pl.origBalance) * 100 : null, emptied: sellsAll(a.level, a.targetRemaining) || b * p < 1 }));
       }
@@ -172,6 +190,7 @@ export function useMarket(cfg: MarketConfig) {
         const got = ord.usd / p;
         c -= ord.usd;
         b += got;
+        swap({ side: 'buy', usd: ord.usd, mc: p * SUPPLY, by: 'tippy' });
         ord = applyBuyOutcome(ord, { status: 'filled', got, price: p }, now);
         const preset = s.presets.find((x) => x.id === ord.guardPresetId);
         const kept = !!pl && (pl.state === 'armed' || pl.state === 'paused');
@@ -221,6 +240,7 @@ export function useMarket(cfg: MarketConfig) {
     setPractice(null);
     setNotices([]);
     setHint(null);
+    setSwaps([]);
   };
 
   /**
@@ -235,6 +255,7 @@ export function useMarket(cfg: MarketConfig) {
       if (amount > c) return { ok: false as const, error: 'Not enough pretend cash.' };
       c -= amount;
       b += amount / p;
+      swap({ side: 'buy', usd: amount, mc: p * SUPPLY, by: 'you' });
       const s = settingsNow();
       const kept = !!pl && (pl.state === 'armed' || pl.state === 'paused');
       if (kept) setPlan(rescale(pl!, b, now));
@@ -248,6 +269,7 @@ export function useMarket(cfg: MarketConfig) {
       const sold = Math.min(b, amount);
       b -= sold;
       c += sold * p;
+      swap({ side: 'sell', usd: sold * p, mc: p * SUPPLY, by: 'you' });
     }
     setBag(b);
     setCash(c);
@@ -342,7 +364,7 @@ export function useMarket(cfg: MarketConfig) {
     },
   };
 
-  return { price, history, bag, cash, plan, setPlan, buys, practice, notices, hint, auto, setAuto, token, api, chatCtx, pump, dump, reset, step, trade, notice, nudge };
+  return { price, history, bag, cash, plan, setPlan, buys, practice, notices, hint, swaps, tick: tickNo.current, auto, setAuto, token, api, chatCtx, pump, dump, reset, step, trade, notice, nudge };
 }
 
 /** Sets an <input>'s value the way typing would, so Preact's onInput sees it. */

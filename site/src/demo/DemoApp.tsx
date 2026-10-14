@@ -30,8 +30,7 @@ import type { ChatCtx } from '@ext/chat/run';
 import { MIN_USD, seedPath, SUPPLY, useMarket } from '../market';
 import { markLinked } from './sim/alerts';
 import { readStore, setCommandHandler, setOpenHandler, sim, writeStore } from './sim/browser';
-import { CandleChart } from './CandleChart';
-import { TradePanel } from './TradePanel';
+import { FomoPage } from './FomoPage';
 
 /** $DEMO opens at an $800K market cap with a $100 bag and orders on. */
 const START = 0.0008;
@@ -413,7 +412,7 @@ export function DemoApp() {
       stop: ['coin', '.tw-level, .tw-form input'],
       buy: ['coin', '.tw-mode-buy'],
       chat: ['coin', '.tw-chat-bar'],
-      drag: ['coin', '.cc'],
+      drag: ['coin', '.fx-chart'],
       fill: ['coin', '.dm-pump'],
       preset: ['settings', '.t-preset-edit'],
       telegram: ['settings', '#alerts', 'alerts'],
@@ -423,7 +422,11 @@ export function DemoApp() {
     const [v, sel, section] = target[id];
     go(v, section);
     // The trade panel sits under Tippy's window: slide the window over the chart.
-    if (id === 'guard' && coinRef.current && window.innerWidth > 860) setPos({ x: 18, y: Math.max(60, coinRef.current.clientHeight - 700) });
+    if (id === 'guard' && coinRef.current && window.innerWidth > 860) {
+      const page = coinRef.current.querySelector<HTMLElement>('.fx');
+      const center = coinRef.current.querySelector<HTMLElement>('.fx-center');
+      if (page && center) setPos({ x: center.offsetLeft + 12, y: Math.max(64, page.clientHeight - 640) });
+    }
     if (minimized && v === 'coin') setMinimized(false);
     setTimeout(() => {
       const el = document.querySelector<HTMLElement>(sel.split(', ').map((x) => `.dm ${x}`).join(', '));
@@ -439,9 +442,6 @@ export function DemoApp() {
   const badge = livePlans.length + m.buys.filter(isLiveBuy).length;
   const mc = m.price * SUPPLY;
   const chg = (m.price / START - 1) * 100;
-  const pnlBase = plan?.entry.priceUSD ?? START;
-  const value = m.bag * m.price;
-  const pnl = (m.price / pnlBase - 1) * 100;
 
   const tour = (
     <div class="tour">
@@ -555,106 +555,28 @@ export function DemoApp() {
           </div>
 
           <div class="bw-view" ref={viewRef}>
-            <div class="fx" ref={coinRef} hidden={view !== 'coin'}>
-              <header class="fx-top">
-                <span class="fx-brand" aria-hidden="true">
-                  <i />
-                  pretend app
-                </span>
-                <span class="fx-search">Search coins</span>
-                <span class="fx-cash">
-                  <small>Cash</small> {formatUsd(m.cash)}
-                </span>
-                <span class="fx-me" aria-hidden="true" />
-              </header>
-              <div class="fx-body">
-                <section class="fx-main">
-                  <div class="fx-coin">
-                    <span class="fx-av" aria-hidden="true">
-                      D
-                    </span>
-                    <div class="fx-name">
-                      <b>Demo coin</b>
-                      <span>$DEMO · pretend</span>
-                    </div>
-                    <div class="fx-mc">
-                      <b>{formatUsd(mc)}</b>
-                      <span class={chg >= 0 ? 'up' : 'down'}>
-                        {chg >= 0 ? '+' : '−'}
-                        {Math.abs(chg).toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div class="fx-chart">
-                    <div class="fx-tf" aria-hidden="true">
-                      <span>1s</span>
-                      <span class="on">1m</span>
-                      <span>5m</span>
-                      <span>1h</span>
-                      <span class="fx-tf-k">Market cap</span>
-                    </div>
-                    <CandleChart
-                      history={m.history}
-                      supply={SUPPLY}
-                      lines={lines}
-                      preview={dragged?.move ?? null}
-                      onDrop={(line, move) => {
-                        setMoveError(null);
-                        setDragged({ line, move });
-                        setMinimized(false);
-                      }}
-                    />
-                  </div>
-                  <div class="fx-pos">
-                    <div>
-                      <small>Your position</small>
-                      <b>{formatUsd(value)}</b>
-                    </div>
-                    <div>
-                      <small>Profit / loss</small>
-                      <b class={pnl >= 0 ? 'up' : 'down'}>
-                        {pnl >= 0 ? '+' : '−'}
-                        {Math.abs(pnl).toFixed(1)}%
-                      </b>
-                    </div>
-                    <div>
-                      <small>Holding</small>
-                      <b>{Math.round(m.bag).toLocaleString('en-US')} DEMO</b>
-                    </div>
-                  </div>
-                </section>
-                <aside class="fx-side">
-                  <TradePanel
-                    symbol="DEMO"
-                    price={m.price}
-                    bag={m.bag}
-                    cash={m.cash}
-                    onTrade={(side, amount) => {
-                      const r = m.trade(side, amount);
-                      return r;
-                    }}
-                  />
-                  <dl class="fx-stats">
-                    <div>
-                      <dt>Market cap</dt>
-                      <dd>{formatUsd(mc)}</dd>
-                    </div>
-                    <div>
-                      <dt>Liquidity</dt>
-                      <dd>{formatUsd(mc * 0.11)}</dd>
-                    </div>
-                    <div>
-                      <dt>Holders</dt>
-                      <dd>1,284</dd>
-                    </div>
-                    <div>
-                      <dt>Chain</dt>
-                      <dd>Pretend</dd>
-                    </div>
-                  </dl>
-                </aside>
-              </div>
-
+            <div class="fx-wrap" ref={coinRef} hidden={view !== 'coin'}>
+              <FomoPage
+                symbol="DEMO"
+                name="Demo coin"
+                supply={SUPPLY}
+                price={m.price}
+                history={m.history}
+                tick={m.tick}
+                bag={m.bag}
+                cash={m.cash}
+                entry={plan?.entry.priceUSD ?? START}
+                swaps={m.swaps}
+                lines={lines}
+                preview={dragged?.move ?? null}
+                onDrop={(line, move) => {
+                  setMoveError(null);
+                  setDragged({ line, move });
+                  setMinimized(false);
+                }}
+                onTrade={(side, amount) => m.trade(side, amount)}
+                onNote={say}
+              >
               {/* Tippy, as the extension draws it on the coin page: its window (or the pill), and its pop-ups. */}
               <div class="tippy tw-host" style={pos ? { left: `${pos.x}px`, top: `${pos.y}px` } : { right: '16px', bottom: '16px' }}>
                 {minimized ? (
@@ -692,6 +614,7 @@ export function DemoApp() {
               <div class="tippy fx-toasts">
                 <Toasts notices={m.notices} here={KEY} />
               </div>
+              </FomoPage>
             </div>
 
             {view === 'settings' && (
