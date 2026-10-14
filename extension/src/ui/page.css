@@ -1,10 +1,4 @@
-/* Extension pages (popup / options / welcome). */
-html,
-body {
-  margin: 0;
-  background: #0a0c0e;
-  color-scheme: dark;
-}
+/* Extension pages (popup / options / welcome); the page background is in page-root.css. */
 .t-page {
   min-height: 100vh;
   background: var(--t-bg);
@@ -60,6 +54,10 @@ body {
 .t-setting > div {
   display: grid;
   gap: 2px;
+}
+/* the control on the right keeps its size; the text beside it wraps instead */
+.t-setting > :not(div) {
+  flex: none;
 }
 .t-setting b {
   font-weight: 700;

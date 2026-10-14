@@ -1,0 +1,7 @@
+/* The extension pages' own document background (tippybot.fun shows the same pages inside its own). */
+html,
+body {
+  margin: 0;
+  background: #0a0c0e;
+  color-scheme: dark;
+}
