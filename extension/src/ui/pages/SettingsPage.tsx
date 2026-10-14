@@ -7,6 +7,7 @@ import type { Preset, Settings } from '../../shared/settings';
 import { DEFAULT_PRESETS } from '../../shared/settings';
 import { presetBlurb } from '../LimitBuy';
 import { send, useTippyState } from '../bridge';
+import { Guide, type GuideId } from '../Guide';
 import { Mascot } from '../Mascot';
 import { TelegramConnect } from '../TelegramConnect';
 
@@ -39,12 +40,20 @@ async function withPermission(perm: 'notifications', on: boolean): Promise<boole
 
 export function SettingsPage() {
   const state = useTippyState();
+  const [guide, setGuide] = useState<GuideId | null>(null);
+  const [tgGo, setTgGo] = useState(0);
   if (!state) return null;
   const s = state.settings;
   const isEdge = navigator.userAgent.includes('Edg/');
+  const finish = (id: GuideId) => {
+    if (id === 'keep-active') set({ keepActiveDone: true });
+    if (id === 'login') set({ loginItemDone: true });
+    setGuide(null);
+  };
 
   return (
     <div class="tippy t-page">
+      {guide && <Guide id={guide} onDone={() => finish(guide)} onClose={() => setGuide(null)} />}
       <div class="t-wrap">
         <div class="t-hero">
           <Mascot mood="happy" size={72} />
@@ -73,19 +82,31 @@ export function SettingsPage() {
           </Setting>
           <Setting
             title={isEdge ? 'Never put fomo to sleep' : 'Always keep fomo active'}
-            help={isEdge ? 'In Edge settings → System and performance → "Never put these sites to sleep", add fomo.family.' : 'In Chrome settings → Performance → "Always keep these sites active", add fomo.family.'}
+            help={`So ${isEdge ? 'Edge' : 'Chrome'} never puts the fomo tab to sleep. Two clicks in ${isEdge ? 'Edge' : 'Chrome'}’s settings — Tippy shows you where.`}
           >
-            <button class="t-btn t-btn-ghost" onClick={() => browser.tabs.create({ url: isEdge ? 'edge://settings/system/managePerformance' : 'chrome://settings/performance' })}>
-              Open settings
-            </button>
+            <DoneOr done={s.keepActiveDone} onClick={() => setGuide('keep-active')}>
+              Set it up
+            </DoneOr>
           </Setting>
-          <Setting title="Open Chrome when your computer starts" help="So Tippy is back after a restart. Mac: System Settings → General → Login Items → add Google Chrome. Windows: Chrome starts with Windows if you pin it to Startup apps.">
-            <span />
+          <Setting title="Open Chrome when your computer starts" help="So Tippy is back after a restart. Your computer does this, not Chrome — Tippy shows you how.">
+            <DoneOr done={s.loginItemDone} onClick={() => setGuide('login')}>
+              Show me how
+            </DoneOr>
           </Setting>
-          <Setting title="Warn my phone if Tippy stops watching" help="With Telegram connected (below), Tippy messages you if your orders go unwatched for 10 minutes.">
-            <a class="t-btn t-btn-ghost" href="#alerts">
-              Set up
-            </a>
+          <Setting title="Warn my phone if Tippy stops watching" help="With Telegram connected, Tippy messages you if your orders go unwatched for 10 minutes.">
+            {s.telegram.linked ? (
+              <span class="t-done-tag">✓ On</span>
+            ) : (
+              <button
+                class="t-btn t-btn-ghost"
+                onClick={() => {
+                  document.getElementById('alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  setTgGo((n) => n + 1);
+                }}
+              >
+                Set up
+              </button>
+            )}
           </Setting>
         </section>
 
@@ -120,12 +141,17 @@ export function SettingsPage() {
         <section class="t-panel" id="alerts">
           <h2>Alerts</h2>
           <p>Tippy always pops up inside fomo’s page when an order fills or expires. Connect Telegram to hear about it on your phone, wherever you are.</p>
-          <TelegramConnect settings={s} />
+          <TelegramConnect settings={s} startSignal={tgGo} />
           <Setting
             title="Desktop notifications"
-            help="A pop-up on this computer when Tippy buys or sells for you, or an order expires — click it to open the coin. Nothing showing on a Mac? Allow Google Chrome in System Settings → Notifications."
+            help="A pop-up on this computer when Tippy buys or sells for you, or an order expires — click it to open the coin."
           >
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {s.notifications && (
+                <button class="t-btn t-btn-ghost" onClick={() => setGuide('notifications')}>
+                  Not showing?
+                </button>
+              )}
               {s.notifications && (
                 <button class="t-btn t-btn-ghost" onClick={() => send({ type: 'TEST_ALERT' })}>
                   Send a test
@@ -202,6 +228,19 @@ export function SettingsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+/** A setup button, or "✓ Done" (still pressable, to see the steps again). */
+function DoneOr({ done, onClick, children }: { done: boolean; onClick: () => void; children: ComponentChildren }) {
+  return done ? (
+    <button class="t-btn t-btn-ghost t-done-btn" onClick={onClick} title="Show the steps again">
+      ✓ Done
+    </button>
+  ) : (
+    <button class="t-btn t-btn-primary" style={{ width: 'auto' }} onClick={onClick}>
+      {children}
+    </button>
   );
 }
 

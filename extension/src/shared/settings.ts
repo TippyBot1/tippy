@@ -40,6 +40,10 @@ export interface Settings {
   /** Offer the trailing stop in Tippy's window (hidden by default; a plan that has one always shows it). */
   showTrailing: boolean;
   onboarded: boolean;
+  /** The user said they added fomo.family to the browser's "always keep active" list (Tippy can't check). */
+  keepActiveDone: boolean;
+  /** The user said they set Chrome to open at login (Tippy can't check). */
+  loginItemDone: boolean;
 }
 
 export const DEFAULT_PRESETS: Preset[] = [
@@ -98,6 +102,8 @@ export const DEFAULT_SETTINGS: Settings = {
   chartLines: true,
   showTrailing: false,
   onboarded: false,
+  keepActiveDone: false,
+  loginItemDone: false,
 };
 
 export function withDefaults(s: Partial<Settings> | undefined): Settings {

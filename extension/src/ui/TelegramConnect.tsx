@@ -22,7 +22,18 @@ export function QrCode({ text, size = 148 }: { text: string; size?: number }) {
   );
 }
 
-export function TelegramConnect({ settings, compact = false, onClose }: { settings: Settings; compact?: boolean; onClose?: () => void }) {
+export function TelegramConnect({
+  settings,
+  compact = false,
+  onClose,
+  startSignal = 0,
+}: {
+  settings: Settings;
+  compact?: boolean;
+  onClose?: () => void;
+  /** Bump to start connecting from outside (settings' "Warn my phone → Set up"). */
+  startSignal?: number;
+}) {
   const { linked } = settings.telegram;
   const [url, setUrl] = useState<string | null>(null);
   const [late, setLate] = useState(false);
@@ -55,6 +66,10 @@ export function TelegramConnect({ settings, compact = false, onClose }: { settin
     }
     else setError(r.ok ? 'Something went wrong — try again.' : r.error);
   };
+
+  useEffect(() => {
+    if (startSignal > 0 && !linked) void start();
+  }, [startSignal]);
 
   if (linked) {
     return (

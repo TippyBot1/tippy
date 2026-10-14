@@ -171,6 +171,8 @@
 /* ---------- the browser window ---------- */
 .bw {
   position: relative;
+  /* Tippy's step-by-step guides are position: fixed; here they cover the browser window, not the site */
+  transform: translateZ(0);
   display: flex;
   flex-direction: column;
   height: calc(100vh - 178px);

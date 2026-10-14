@@ -172,3 +172,176 @@
   padding: 4px 10px;
   font-size: 12px;
 }
+
+/* ---------- step-by-step guides, front and centre (ui/Guide.tsx) ---------- */
+.t-guide-back {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 6, 8, 0.72);
+  backdrop-filter: blur(3px);
+  animation: t-guide-fade 0.15s ease-out both;
+}
+.t-guide {
+  width: min(480px, 100%);
+  max-height: calc(100% - 20px);
+  overflow: auto;
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--t-line-2);
+  border-radius: 20px;
+  background: var(--t-surface);
+  box-shadow: var(--t-shadow);
+  animation: t-guide-in 0.22s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+.t-guide-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.t-guide-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+}
+.t-guide-x {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--t-surface-2);
+  font-size: 18px;
+  line-height: 1;
+}
+.t-guide-why {
+  margin: 0;
+  color: var(--t-muted);
+  font-size: 13.5px;
+}
+.t-guide-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.t-guide-steps li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.t-guide-n {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--t-mint);
+  color: var(--t-ink);
+  font-weight: 800;
+  font-size: 14px;
+}
+.t-guide-acts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.t-guide-acts .t-btn {
+  width: auto;
+  flex: 1;
+}
+@keyframes t-guide-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes t-guide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* a sketch of the screen the steps happen on */
+.t-gsk {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--t-line-2);
+  border-radius: 14px;
+  background: var(--t-bg);
+  font-size: 12.5px;
+}
+.t-gsk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--t-surface-2);
+}
+.t-gsk-item {
+  background: rgba(94, 230, 181, 0.12);
+  color: var(--t-mint);
+  font-weight: 700;
+}
+.t-gsk-btn {
+  font-style: normal;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--t-mint);
+  color: var(--t-mint);
+  font-weight: 800;
+}
+.t-gsk-dim {
+  border-color: var(--t-line-2);
+  color: var(--t-muted);
+}
+.t-gsk-pop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 24px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--t-line-2);
+  background: var(--t-surface);
+}
+.t-gsk-pop small {
+  color: var(--t-muted);
+}
+.t-gsk-in {
+  flex: 1;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--t-bg);
+  border: 1px solid var(--t-mint);
+}
+.t-gsk-go {
+  background: var(--t-mint);
+  color: var(--t-ink);
+}
+
+.t-done-tag {
+  flex: none;
+  color: var(--t-mint);
+  font-weight: 800;
+}
+.tippy .t-done-btn {
+  color: var(--t-mint);
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-guide-back,
+  .t-guide {
+    animation: none;
+  }
+}

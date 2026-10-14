@@ -3,6 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
 import type { RelayResponse } from '../../shared/messages';
 import { send, useTippyState } from '../bridge';
+import { Guide } from '../Guide';
 import { Mascot } from '../Mascot';
 import { TelegramConnect } from '../TelegramConnect';
 
@@ -26,7 +27,7 @@ async function fomoReady(): Promise<boolean> {
 export function WelcomePage() {
   const state = useTippyState();
   const [loggedIn, setLoggedIn] = useState(false);
-  const [awakeDone, setAwakeDone] = useState(false);
+  const [guide, setGuide] = useState(false);
 
   useEffect(() => {
     const check = () => fomoReady().then(setLoggedIn);
@@ -35,6 +36,7 @@ export function WelcomePage() {
     return () => clearInterval(t);
   }, []);
 
+  const awakeDone = !!state?.settings.keepActiveDone;
   const allDone = loggedIn && !!state?.settings.deskConsent && awakeDone;
   useEffect(() => {
     if (allDone && state && !state.settings.onboarded) send({ type: 'SET_SETTINGS', patch: { onboarded: true } });
@@ -45,6 +47,16 @@ export function WelcomePage() {
 
   return (
     <div class="tippy t-page">
+      {guide && (
+        <Guide
+          id="keep-active"
+          onDone={() => {
+            void send({ type: 'SET_SETTINGS', patch: { keepActiveDone: true } });
+            setGuide(false);
+          }}
+          onClose={() => setGuide(false)}
+        />
+      )}
       <div class="t-wrap" style={{ maxWidth: 600 }}>
         <div class="t-hero">
           <Mascot mood={allDone ? 'happy' : 'watching'} size={96} />
@@ -73,20 +85,17 @@ export function WelcomePage() {
                 </li>
                 <li>Leave the laptop lid open and the charger in — closing the lid sleeps it.</li>
                 <li>
-                  {isEdge
-                    ? 'In Edge: Settings → System and performance → "Never put these sites to sleep" → add fomo.family.'
-                    : 'In Chrome: Settings → Performance → "Always keep these sites active" → Add → fomo.family.'}
+                  {awakeDone ? (
+                    <b>✓ fomo.family is on {isEdge ? 'Edge' : 'Chrome'}’s never-sleep list.</b>
+                  ) : (
+                    <>Add fomo.family to {isEdge ? 'Edge' : 'Chrome'}’s never-sleep list, so the fomo tab is always awake. Three clicks — I’ll show you.</>
+                  )}
                 </li>
               </ul>
               {!awakeDone && (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button class="t-btn t-btn-primary" onClick={() => browser.tabs.create({ url: isEdge ? 'edge://settings/system/managePerformance' : 'chrome://settings/performance' })}>
-                    Open {isEdge ? 'Edge' : 'Chrome'} settings
-                  </button>
-                  <button class="t-btn t-btn-ghost" onClick={() => setAwakeDone(true)}>
-                    Done
-                  </button>
-                </div>
+                <button class="t-btn t-btn-primary" onClick={() => setGuide(true)}>
+                  Show me how
+                </button>
               )}
             </div>
           </div>
