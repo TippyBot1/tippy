@@ -2,7 +2,7 @@ export const SITE_URL = 'https://tippybot.fun';
 /** Kill switch / banner / minimum version — data only, never selectors or code. */
 export const STATUS_URL = `${SITE_URL}/status.json`;
 export const ALERTS_URL: string = import.meta.env.WXT_ALERTS_URL ?? 'https://alerts.tippybot.fun';
-export const TELEGRAM_BOT = 'TippyBotAlerts';
+export const TELEGRAM_BOT = 'TippyAlertsBot';
 
 /**
  * fomo's trade minimums (USD) when /config can't be read. Live values 2026-10-12:

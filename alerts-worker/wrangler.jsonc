@@ -13,7 +13,7 @@
   ],
   // Dead-man check every 5 minutes.
   "triggers": { "crons": ["*/5 * * * *"] },
-  "vars": { "BOT_USERNAME": "TippyBotAlerts" },
+  "vars": { "BOT_USERNAME": "TippyAlertsBot" },
   "routes": [{ "pattern": "alerts.tippybot.fun", "custom_domain": true }]
   // Secrets (never in this file) — set both, and the Telegram webhook, with:
   //   ./connect-telegram.sh   (asks for the @BotFather token without showing it)
