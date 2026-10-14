@@ -241,6 +241,9 @@
 .t-pill:focus-within {
   border-color: var(--t-mint);
 }
+.tippy .t-pill input:focus-visible {
+  outline: none; /* the pill's border shows focus */
+}
 .t-pill input {
   border: 0;
   background: transparent;
