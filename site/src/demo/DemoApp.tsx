@@ -24,11 +24,12 @@ import { Mascot } from '@ext/ui/Mascot';
 import { PopupPage } from '@ext/ui/pages/PopupPage';
 import { SettingsPage } from '@ext/ui/pages/SettingsPage';
 import { WelcomePage } from '@ext/ui/pages/WelcomePage';
+import { TelegramConnect } from '@ext/ui/TelegramConnect';
 import { Toasts } from '@ext/ui/Toasts';
 import { TippyPill, TippyWindow, type WindowApi, type WindowNotice, type WindowToggles } from '@ext/ui/TippyWindow';
 import type { ChatCtx } from '@ext/chat/run';
 import { MIN_USD, seedPath, SUPPLY, useMarket } from '../market';
-import { markLinked } from './sim/alerts';
+import { linkStatus, markLinked, newLinkId } from './sim/alerts';
 import { readStore, setCommandHandler, setOpenHandler, sim, writeStore } from './sim/browser';
 import { FomoPage } from './FomoPage';
 
@@ -37,6 +38,8 @@ const START = 0.0008;
 const BAG = 125_000;
 const CASH = 150;
 const KEY = `demo:1399811149`;
+/** What the demo's QR code opens: this page (the real one opens @TippyAlertsBot). */
+const DEMO_TG = 'https://tippybot.fun/demo';
 
 /** A second pretend coin, guarded, so the toolbar popup shows "every order on every coin". */
 function otherCoin(): Plan {
@@ -101,7 +104,7 @@ const TASKS: { id: TaskId; title: string; how: string }[] = [
   { id: 'drag', title: 'Drag a line on the chart', how: 'Grab a dashed line, drop it, then tap Move in Tippy’s window.' },
   { id: 'fill', title: 'Watch Tippy sell', how: 'Hit Pump above the page until a take profit fills.' },
   { id: 'preset', title: 'Change a preset', how: 'Settings tab → Presets. The P buttons in Tippy’s window follow.' },
-  { id: 'telegram', title: 'Connect Telegram', how: 'Settings → Alerts → Connect Telegram. Pretend here: nothing is sent.' },
+  { id: 'telegram', title: 'Connect Telegram', how: 'Tap 🔔 in Tippy’s window → Connect Telegram → “Telegram on this computer”, then Start in the pretend chat. Nothing is sent.' },
   { id: 'pause', title: 'Pause everything', how: 'The Tippy button in the browser toolbar, then the switch.' },
   { id: 'guard', title: 'Auto-guard a new buy', how: 'Turn on Auto (🛡) in Tippy’s footer, stop the orders, then buy in the trade panel.' },
 ];
@@ -173,6 +176,10 @@ export function DemoApp() {
   const [popup, setPopup] = useState(false);
   const [note, setNote] = useState<{ id: number; text: string } | null>(null);
   const [phone, setPhone] = useState<Phone[]>([]);
+  /** The pretend Telegram chat is open on @TippyAlertsBot, waiting for Start. */
+  const [phoneStart, setPhoneStart] = useState(false);
+  /** The 🔔 phone-alerts box in Tippy's window. */
+  const [bell, setBell] = useState(false);
   const [done, setDone] = useState<Set<TaskId>>(new Set());
   const [tourOpen, setTourOpen] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -270,6 +277,28 @@ export function DemoApp() {
       case 'TEST_ALERT':
         mk.notice({ key: '', title: '👋 Test from Tippy', text: 'Alerts are working. When an order fills you’ll see “Tippy filled order — Tippy sold 25% of $DEMO at $1.4M MC.”', tone: 'info' });
         return { ok: true };
+      case 'TELEGRAM_CONNECT': {
+        if (cur.telegram.linked && cur.telegram.linkId) return { ok: true, telegram: { url: DEMO_TG, linked: true } };
+        const linkId = cur.telegram.linkId ?? newLinkId();
+        await writeStore({ settings: { ...cur, telegram: { linkId, linked: false } } });
+        return { ok: true, telegram: { url: DEMO_TG, linked: false } };
+      }
+      case 'TELEGRAM_CHECK': {
+        const { linkId, linked } = cur.telegram;
+        if (!linkId) return { ok: true, telegram: { url: null, linked: false } };
+        if (linked || !(await linkStatus(linkId))) return { ok: true, telegram: { url: DEMO_TG, linked } };
+        await writeStore({ settings: { ...cur, telegram: { linkId, linked: true } } });
+        mk.notice({ key: '', title: '📱 Tippy is on your phone', text: 'Alerts are working. You’ll get a message here when an order fills, when Tippy needs you, or if it stops watching.', tone: 'info' });
+        return { ok: true, telegram: { url: DEMO_TG, linked: true } };
+      }
+      case 'TELEGRAM_OPEN':
+        if (!cur.telegram.linkId) return { ok: false, error: 'Press Connect Telegram first.' };
+        setPhone([]);
+        setPhoneStart(true);
+        return { ok: true };
+      case 'TELEGRAM_DISCONNECT':
+        await writeStore({ settings: { ...cur, telegram: { linkId: null, linked: false } } });
+        return { ok: true };
       case 'OPEN_OPTIONS':
         go('settings', cmd.section);
         return { ok: true };
@@ -280,14 +309,8 @@ export function DemoApp() {
 
   /** "Open a tab": the demo's views, a pretend Telegram, or a note about what Chrome would do. */
   const open = (url: string) => {
-    if (url.startsWith('https://t.me/')) {
-      const id = new URL(url).searchParams.get('start');
-      say('Pretend Telegram opened @TippyAlertsBot and you tapped Start.');
-      setTimeout(() => {
-        if (id) markLinked(id);
-        phoneSay("👋 Hi, I'm Tippy! You're connected.\nI'll message you when I take profit, hit a stop, need your OK, or stop watching.");
-      }, 900);
-    } else if (url.includes('/options.html')) go('settings', url.split('#')[1]);
+    if (url.startsWith('https://t.me/')) setPhoneStart(true);
+    else if (url.includes('/options.html')) go('settings', url.split('#')[1]);
     else if (url.includes('/welcome.html')) go('welcome');
     else if (/^https:\/\/fomo\.family\/?$/.test(url)) {
       sim.fomoOpen = true;
@@ -308,12 +331,13 @@ export function DemoApp() {
   function go(v: View, section?: string) {
     setView(v);
     setPopup(false);
-    requestAnimationFrame(() => {
+    // After the view has rendered (a page switch takes a frame or two).
+    setTimeout(() => {
       const box = viewRef.current;
       if (!box) return;
       const el = section ? box.querySelector<HTMLElement>(`[id="${section}"]`) : null;
-      box.scrollTo({ top: el ? el.offsetTop - 12 : 0 });
-    });
+      box.scrollTo({ top: el ? el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12 : 0 });
+    }, 60);
   }
 
   // Deep links from the other pages: /demo#settings, #alerts, #setup, #popup, #chat.
@@ -383,7 +407,7 @@ export function DemoApp() {
     if (name === 'autoGuard') void command({ type: 'SET_SETTINGS', patch: { autoGuard: { ...s.autoGuard, enabled: v } } });
     else if (name === 'dryRun') void command({ type: 'SET_SETTINGS', patch: { dryRun: v } });
     else if (name === 'stayAwake') void command({ type: 'SET_SETTINGS', patch: { stayAwake: v } });
-    else go('settings', 'alerts');
+    else setBell((b) => !b); // 🔔 phone alerts, right in the window — as in the extension
   };
 
   /** Drag Tippy's window by its header, inside the page, like on fomo. */
@@ -415,7 +439,7 @@ export function DemoApp() {
       drag: ['coin', '.fx-chart'],
       fill: ['coin', '.dm-pump'],
       preset: ['settings', '.t-preset-edit'],
-      telegram: ['settings', '#alerts', 'alerts'],
+      telegram: ['coin', '.tw-foot'],
       pause: ['coin', '.bw-ext'],
       guard: ['coin', '.fx-trade'],
     };
@@ -607,6 +631,7 @@ export function DemoApp() {
                     dragHandle={dragWindow}
                     note={s.dryRun ? 'Dry run is on — Tippy won’t actually buy or sell' : undefined}
                     notice={windowNotice}
+                    panel={bell ? <TelegramConnect settings={s} compact onClose={() => setBell(false)} /> : null}
                     chat={<Chat ctx={chatCtx} />}
                   />
                 )}
@@ -642,16 +667,32 @@ export function DemoApp() {
         </div>
       </div>
 
-      {phone.length > 0 && (
+      {(phone.length > 0 || phoneStart) && (
         <div class="phone" role="status" aria-label="Pretend phone: Telegram">
           <div class="phone-head">
             <Mascot mood="happy" size={22} />
             <b>TippyAlerts</b>
             <span>Telegram · pretend</span>
-            <button aria-label="Close" onClick={() => setPhone([])}>
+            <button aria-label="Close" onClick={() => (setPhone([]), setPhoneStart(false))}>
               ×
             </button>
           </div>
+          {phoneStart && (
+            <>
+              <p>I'm Tippy's alert bot. Tap Start and I'll message you when Tippy sells or buys, needs you, or stops watching. I never ask for keys or passwords.</p>
+              <button
+                class="phone-start"
+                onClick={() => {
+                  const id = readStore<Settings>('settings')?.telegram.linkId;
+                  if (id) markLinked(id);
+                  setPhoneStart(false);
+                  phoneSay("👋 Hi, I'm Tippy! You're connected.\nI'll message you when I take profit, hit a stop, need your OK, or stop watching.");
+                }}
+              >
+                Start
+              </button>
+            </>
+          )}
           {phone.map((p) => (
             <p key={p.id}>{p.text}</p>
           ))}

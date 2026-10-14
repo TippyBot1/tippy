@@ -1272,3 +1272,17 @@
     width: auto;
   }
 }
+
+/* the pretend Telegram chat's Start button */
+.phone-start {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: #2aabee;
+  color: #fff;
+  font: 600 14px var(--sans);
+  cursor: pointer;
+}

@@ -10,6 +10,10 @@ const FAQ: [string, ComponentChildren][] = [
       No. Tippy runs in Chrome on your computer, so it only buys or sells while the computer is awake and Chrome is open — and it keeps the computer awake while you have orders on. <a href="/how">What happens if it was asleep when a level hit</a>.
     </>,
   ],
+  [
+    'How do phone alerts work?',
+    'Tap 🔔 at the bottom of Tippy’s window, then scan the code with your phone’s camera (or open Telegram on your computer) and tap Start in @TippyAlertsBot. That’s it — no bot to make, no token, no chat ID. You get a short message when an order fills, when Tippy needs you, or if it stops watching for 10 minutes while you have orders on. Messages say only the coin and what happened, never your wallet or login, and the bot never messages first.',
+  ],
   ['Will my stop always fill at my price?', 'No bot can promise that. Sells are market orders through fomo’s own Sell button, so in a fast dump or a thin pool the fill can land below your level. Tippy shows the price impact and lets you set limits on it.'],
   [
     'Can I try it without trading?',

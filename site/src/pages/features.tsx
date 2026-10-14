@@ -167,9 +167,9 @@ function Bento() {
           <article class="cell c-5">
             <p class="cell-label">Fill notifications</p>
             <h3>Know the moment an order fills</h3>
-            <p>A pop-up on fomo, plus an optional desktop notification and Telegram message. If Tippy stops watching, your Telegram alerts tell you.</p>
+            <p>A pop-up on fomo every time. For your phone, tap 🔔 in Tippy’s window, scan the code and tap Start in Telegram — no bot token, no chat ID. Your phone also hears if Tippy stops watching.</p>
             <a class="cell-go" href="/demo#alerts">
-              Turn alerts on in the demo <span aria-hidden="true">→</span>
+              Connect pretend Telegram in the demo <span aria-hidden="true">→</span>
             </a>
             <div class="notes art" role="img" aria-label="Two example notifications: a pop-up on fomo saying Tippy filled an order, and a Telegram message saying Tippy stopped watching">
               <div class="note note-good">
