@@ -21,6 +21,7 @@ import { isLiveBuy, validateBuyInput } from '../engine/buys';
 import { editPlan, hasInFlight, isEditableStop, isEditableTp, normalizePlan, type PlanEdit, planEditWith } from '../engine/orders';
 import { formatUsd, formatX, validatePlanInput } from '../engine/triggers';
 import type { BuyInput, BuyOrder, LevelStatus, Plan, PlanInput, Trigger } from '../engine/types';
+import { DEV_TOOLS } from '../shared/config';
 import type { CommandResult } from '../shared/messages';
 import type { Preset, Settings } from '../shared/settings';
 import { dropText, levelProblem, levelText, levelX, type Now } from '../ui/levels';
@@ -346,7 +347,7 @@ const livePlan = (plans: Plan[], key: string) => plans.find((p) => p.key === key
 const waitingBuy = (o: BuyOrder) => o.state === 'armed' || o.state === 'queued';
 const eqSym = (a: string, b: string) => a.replace(/^\$/, '').trim().toLowerCase() === b.replace(/^\$/, '').trim().toLowerCase();
 
-const WHICH_COIN = 'Which coin? Open one on fomo, or name it — like "tp at 500k mcap on CLAUDIA".';
+const WHICH_COIN = 'Which coin? Open one on fomo, or name it — like "tp at 500k mcap on $TIPPY".';
 
 function needPrice(c: ChatCoin): Reply | null {
   return c.priceUSD != null && c.priceUSD > 0 ? null : refuse(`I can't see ${sym(c)}'s price yet — try again in a moment.`);
@@ -1217,8 +1218,8 @@ export const HELP = [
   '• "move tp1 to 2m" · "remove my stop"',
   '• "buy $10 at 300k mcap" · "cancel my buy"',
   '• "guard with classic" · "pause" · "cancel my plan"',
-  '• "show my orders" · "dry run on"',
-  'Add "on CLAUDIA" for a coin you hold or have orders on.',
+  DEV_TOOLS ? '• "show my orders" · "dry run on"' : '• "show my orders" · "auto guard on"',
+  'Add "on $TIPPY" for a coin you hold or have orders on.',
 ].join('\n');
 
 /** "half", "a quarter", "20%" — a share of your cash in words. */

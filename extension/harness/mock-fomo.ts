@@ -26,6 +26,9 @@ export const demoCtl = {
   },
   supply: 1e9,
 };
+/** ?coin=tippy films the promo on $TIPPY; the store screenshots keep the pretend $BONKLE. */
+export const COIN =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('coin') === 'tippy' ? { symbol: 'TIPPY', name: 'Tippy' } : { symbol: 'BONKLE', name: 'Bonkle (pretend)' };
 const SOLANA = CHAINS.find((c) => c.slug === 'solana')!;
 const CASH: Holding = { key: tokenKey(SOLANA.usdc, SOLANA.networkId), amount: 25, priceUSD: 1, mc: null, symbol: 'USDC', name: 'USD Coin' };
 
@@ -44,7 +47,7 @@ export function session(): SessionState {
 
 function q(): TokenQuote {
   if (!DEMO) price *= Math.exp((Math.random() - 0.5) * 0.04);
-  return { key: HARNESS_KEY, priceUSD: price, mc: price * SUPPLY, symbol: 'BONKLE', name: 'Bonkle (pretend)' };
+  return { key: HARNESS_KEY, priceUSD: price, mc: price * SUPPLY, symbol: COIN.symbol, name: COIN.name };
 }
 
 export async function quotes(keys: string[]): Promise<TokenQuote[]> {
@@ -52,7 +55,7 @@ export async function quotes(keys: string[]): Promise<TokenQuote[]> {
 }
 
 export async function balances(): Promise<{ holdings: Holding[]; unparsed: number }> {
-  const coin: Holding = { key: HARNESS_KEY, amount: bag, priceUSD: price, mc: price * SUPPLY, symbol: 'BONKLE', name: 'Bonkle (pretend)' };
+  const coin: Holding = { key: HARNESS_KEY, amount: bag, priceUSD: price, mc: price * SUPPLY, symbol: COIN.symbol, name: COIN.name };
   return { holdings: bag > 0 ? [coin, CASH] : [CASH], unparsed: 0 };
 }
 

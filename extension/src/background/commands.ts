@@ -4,7 +4,7 @@ import { buildPlan, cancelPlan, editPlan, getLevel, pausePlan, resolveHeld, resu
 import { validatePlanInput } from '../engine/triggers';
 import type { SellAction } from '../engine/types';
 import { linkStatus, newLinkId, notify } from '../shared/alerts';
-import { telegramLink } from '../shared/config';
+import { DEV_TOOLS, telegramLink } from '../shared/config';
 import type { Command, CommandResult } from '../shared/messages';
 import { load, save } from '../shared/store';
 import { withLock } from './lock';
@@ -185,6 +185,7 @@ export async function handleCommand(cmd: Command, from: { tabId?: number } = {})
       return buy ? { ok: true, buy } : { ok: false, error: 'That order is gone.' };
     }
     case 'PRACTICE': {
+      if (!DEV_TOOLS) return { ok: false, error: 'Practice runs are a developer tool.' };
       const result = await practice(cmd.key, cmd.side, cmd.usd, from.tabId);
       await withLock(() => save({ practice: result }));
       return result.ok ? { ok: true, practice: result } : { ok: false, error: result.detail };

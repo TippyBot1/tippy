@@ -12,6 +12,7 @@ import { validateBuyInput } from '../engine/buys';
 import { summarizePlan } from '../engine/orders';
 import { describeTrigger, formatUsd, formatX } from '../engine/triggers';
 import type { BuyInput, BuyOrder, Plan, Trigger } from '../engine/types';
+import { DEV_TOOLS } from '../shared/config';
 import type { CommandResult, PracticeResult } from '../shared/messages';
 import { DEFAULT_PRESETS, type Preset } from '../shared/settings';
 import { BuyOrders } from './BuyList';
@@ -318,7 +319,7 @@ export function LimitBuy({
       <button class="tw-arm is-buy" disabled={busy || !input || issues.length > 0} onClick={place}>
         {busy ? 'Placing…' : !trigger ? 'Set a buy level first' : `Place limit buy · ${money(draft.usd)} at ${lvl}`}
       </button>
-      <PracticeRun side="buy" token={token} usd={draft.usd} blocked={draft.usd > 0 ? null : 'Pick an amount first.'} api={api} last={practice} />
+      {DEV_TOOLS && <PracticeRun side="buy" token={token} usd={draft.usd} blocked={draft.usd > 0 ? null : 'Pick an amount first.'} api={api} last={practice} />}
       <BuyOrders orders={buys} now={token} unit={unit} busy={busy} onCancel={(id) => run(() => api.cancelBuy(id))} onResolve={(id, bought) => run(() => api.resolveBuy(id, bought))} />
     </div>
   );

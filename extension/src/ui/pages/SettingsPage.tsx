@@ -2,7 +2,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
-import { SITE_URL } from '../../shared/config';
+import { DEV_TOOLS, SITE_URL } from '../../shared/config';
 import type { Preset, Settings } from '../../shared/settings';
 import { DEFAULT_PRESETS } from '../../shared/settings';
 import { presetBlurb } from '../LimitBuy';
@@ -200,9 +200,11 @@ export function SettingsPage() {
           <Setting title="OK fomo's risk warnings for me" help="fomo sometimes asks you to tick 'I understand' on risky coins.">
             <Switch on={s.acceptRiskWarnings} label="Accept risk warnings" onChange={(v) => set({ acceptRiskWarnings: v })} />
           </Setting>
-          <Setting title="Dry run (practice mode)" help="Tippy does everything except press the final Sell or Buy button — for take-profits, stop losses and limit buys.">
-            <Switch on={s.dryRun} label="Dry run" onChange={(v) => set({ dryRun: v })} />
-          </Setting>
+          {DEV_TOOLS && (
+            <Setting title="Dry run (practice mode)" help="Tippy does everything except press the final Sell or Buy button — for take-profits, stop losses and limit buys.">
+              <Switch on={s.dryRun} label="Dry run" onChange={(v) => set({ dryRun: v })} />
+            </Setting>
+          )}
           <Setting title="Show my levels on fomo's chart" help="Dashed lines: limit buys green, take-profits blue, stops red, trailing stop amber. Drag one to move it — Tippy asks before changing anything.">
             <Switch on={s.chartLines !== false} label="Chart lines" onChange={(v) => set({ chartLines: v })} />
           </Setting>

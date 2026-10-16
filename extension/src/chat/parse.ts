@@ -13,6 +13,7 @@
 // sell size, the level — so the words left over can only be the coin.
 
 import { formatUsd, formatX } from '../engine/triggers';
+import { DEV_TOOLS } from '../shared/config';
 import type { CoinSpec, Intent, LevelSpec } from './intent';
 
 export interface ParseOptions {
@@ -623,7 +624,7 @@ function findCoin(m: Msg, c: Ctx, opts: { all?: boolean; dflt?: 'here' | 'all' }
     if (named.length === 1) return { symbol: named[0].toUpperCase() };
     // "sell my claudia for wif": two coins named — a swap? Never pick one.
     const names = (named.length > 1 ? named : uniq).slice(0, 3).map((w) => `$${w.toUpperCase()}`);
-    return { hint: `Which coin — ${names.join(' or ')}? Put a $ in front of it, like $CLAUDIA.` };
+    return { hint: `Which coin — ${names.join(' or ')}? Put a $ in front of it, like $TIPPY.` };
   }
   if (opts.all && m.has(ALL_W)) return { all: true };
   if (m.has(HERE_W)) return { here: true };
@@ -1130,10 +1131,11 @@ const setting: Handler = (m) => {
     return null;
   };
 
-  if (/\b(?:go live|live mode|real mode|real trading|real money|for real|live trading)\b/.test(s)) found.push({ type: 'setting', name: 'dryRun', value: off });
+  if (/\b(?:go live|live mode|real mode|real trading|real money|for real|live trading)\b/.test(s)) found.push(DEV_TOOLS ? { type: 'setting', name: 'dryRun', value: off } : unknown(ALL_REAL));
   else if (/\b(?:dry ?run(?:s|ning)?|paper(?: trading| trade| mode)?|(?:practice|test|testing|sim|simulation|demo|fake) mode)\b/.test(s)) {
     // "dry run a sell on CLAUDIA" is a practice run — its "on" is the coin's, not the setting's.
     if (/\b(?:buy|sell|buying|selling|tp|sl)\b/.test(s)) return null;
+    if (!DEV_TOOLS) return unknown(ALL_REAL);
     const r = pick('dryRun');
     if (r) found.push(r);
     else return unknown('Dry run on or off? Say "dry run on" (I stop before the final button) or "dry run off".');
@@ -1152,9 +1154,12 @@ const setting: Handler = (m) => {
     found.push({ type: 'setting', name: 'levelUnit', value: 'mc' });
   if (rx(`${UNIT_V}(?:percent(?:age)?s?|%|moves?|multiples?|multipliers?|x|xs|x and %|% and x)(?![\\w%])|\\b(?:percent|percentage|%|move|x|multiple) (?:mode|view|units?)\\b`).test(s))
     found.push({ type: 'setting', name: 'levelUnit', value: 'move' });
-  if (found.length > 1) return unknown('One setting at a time, please — like "dry run on".');
+  if (found.length > 1) return unknown('One setting at a time, please — like "auto guard on".');
   return found[0] ?? null;
 };
+
+/** The store build has no practice runs or dry run: every order is real, and always shown first. */
+const ALL_REAL = 'Every order I place is real — there\'s no practice mode. Tell me one, like "sell 25% at 1m", and I\'ll show you exactly what I\'ll do and wait for your tap.';
 
 const PRACTICE_W = /\b(?:practice|practicing|practise|practising|rehearse|rehearsal|simulate|simulated|simulation|mock|dummy|demo|test|testing|dry run|fake|pretend|paper(?: trade| trading| mode| money)?)\b/;
 const practice: Handler = (m, c) => {
@@ -1162,12 +1167,17 @@ const practice: Handler = (m, c) => {
   // With a level ("… at 2x", "500k", "-20%") it's an order said as a test: real, or a dry run? Never a real order by surprise.
   if (m.has(/\d\s*(?:[kmbx%]|mc|mcap)(?![a-z])|[+-]\d|\b(?:at|if|when|below|above|under|over|drops? to|dips? to|hits?)\s+\$?\.?\d/)) {
     if (m.has(SELL_W) || m.has(BUY_V) || families(m.s).size) {
-      return unknown('For real, or a dry run? I can\'t make one order pretend — say "dry run on" first (I go through every step but never press the final button), then send the order. Or leave out the "test" for a real one.');
+      return unknown(
+        DEV_TOOLS
+          ? 'For real, or a dry run? I can\'t make one order pretend — say "dry run on" first (I go through every step but never press the final button), then send the order. Or leave out the "test" for a real one.'
+          : 'Every order I place is real, so leave out the "test" and send it again — I\'ll show you exactly what I\'ll do and wait for your tap.',
+      );
     }
     return null;
   }
   const buy = m.has(/\b(?:buy|buys|buying|bought|purchase|bid)\b/);
   const sell = m.has(/\b(?:sell|sells|selling|sold|tp|take profit|sl|stop loss|dump)\b/);
+  if (!DEV_TOOLS) return buy || sell ? unknown(ALL_REAL) : null;
   if (buy && sell) return unknown('Practice a buy or a sell? One at a time — "practice a sell".');
   if (!buy && !sell) return unknown('Want me to practice a buy or a sell? Try "practice a sell" or "practice buying $5".');
   let usd: number | null = null;
@@ -1178,7 +1188,7 @@ const practice: Handler = (m, c) => {
     if (usd != null && !(usd > 0)) return unknown('Pick an amount above $0, like "practice buying $5".');
   }
   m.take(/\b(?:practice|practicing|practise|practising|rehearse|simulate|mock|dummy|demo|test|testing|dry run|fake|pretend|buy|buys|buying|sell|sells|selling)\b/);
-  const coin = oneCoin(m, c, 'One coin at a time — try "practice a sell on CLAUDIA".');
+  const coin = oneCoin(m, c, 'One coin at a time — try "practice a sell on $TIPPY".');
   if (isHint(coin)) return unknown(coin.hint);
   return { type: 'practice', coin, side: buy ? 'buy' : 'sell', usd };
 };
@@ -1303,7 +1313,7 @@ const stopPlan: Handler = (m, c) => {
   // "sell half at 2x, don't forget" is a sell, not "forget this coin".
   if (m.has(SELL_W) || /(?<![a-z$])\d/.test(m.s)) return null;
   m.take(STOP_PLAN);
-  const coin = oneCoin(m, c, 'I stop plans one coin at a time — try "stop guarding CLAUDIA". To pause everything, say "pause everything".');
+  const coin = oneCoin(m, c, 'I stop plans one coin at a time — try "stop guarding $TIPPY". To pause everything, say "pause everything".');
   if (isHint(coin)) return unknown(coin.hint);
   return { type: 'stop-plan', coin };
 };
@@ -1313,19 +1323,19 @@ const vagueCancel: Handler = (m) => {
   if (!m.has(/^(?:stop|cancel|kill|end|abort|halt|close|clear|delete|remove)\b/)) return null;
   if (m.has(/\bstop ?loss\b/) || /(?<![a-z$])\d/.test(m.s)) return null;
   if (!m.has(/\b(?:all|everything|orders?|it)\b/) && m.words().length > 1) return null;
-  return unknown('Pause everything, or cancel something? Try "pause everything", "cancel all buys" or "stop guarding CLAUDIA".');
+  return unknown('Pause everything, or cancel something? Try "pause everything", "cancel all buys" or "stop guarding $TIPPY".');
 };
 
 const pause: Handler = (m, c) => {
   const p = m.has(/\b(?:pause|paused|pausing|freeze|suspend|halt|snooze|kill switch|emergency stop|panic)\b/);
   const r = m.has(/\b(?:resume|resumed|resuming|unpause|unpaused|un pause|continue|restart|unfreeze|wake up|wake|start again|carry on|keep going|go again|reactivate|re enable|reenable|turn back on|back on|unsuspend)\b/);
   if (!p && !r) return null;
-  if (p && r) return unknown('Pause or resume? Say "pause CLAUDIA" or "resume CLAUDIA".');
+  if (p && r) return unknown('Pause or resume? Say "pause $TIPPY" or "resume $TIPPY".');
   // "sell half at 2x then pause": two things — never just the pause.
   if (m.has(SELL_W) || /(?<![a-z$])\d/.test(m.s)) return unknown(ONE_THING);
-  if (m.has(BUY_N)) return unknown(`I can't ${p ? 'pause' : 'resume'} a buy — "cancel my buy on CLAUDIA" removes it.`);
+  if (m.has(BUY_N)) return unknown(`I can't ${p ? 'pause' : 'resume'} a buy — "cancel my buy on $TIPPY" removes it.`);
   const ts = takeTargets(new Msg(m.s));
-  if (!isHint(ts) && ts.length) return unknown('I pause whole coins, not single levels — try "pause CLAUDIA" (or "remove tp2").');
+  if (!isHint(ts) && ts.length) return unknown('I pause whole coins, not single levels — try "pause $TIPPY" (or "remove tp2").');
   m.take(/\b(?:pause|paused|pausing|freeze|suspend|halt|snooze|kill switch|emergency stop|panic|resume|resumed|resuming|unpause|unpaused|un pause|continue|restart|unfreeze|wake up|wake|start again|carry on|keep going|go again|reactivate|re enable|reenable|turn back on|back on|unsuspend)\b/);
   const coin = findCoin(m, c, { all: true, dflt: 'all' });
   if (isHint(coin)) return unknown(coin.hint);
@@ -1457,7 +1467,7 @@ const limitBuy: Handler = (m, c) => {
   if (down && up) return unknown(both);
   const swap = m.s.match(SWAP_WITH);
   if (swap && isTicker(swap[1])) return unknown(`I only buy with cash — I can't swap $${swap[1].toUpperCase()} for another coin. Say "buy ${usdText(usd)} ${where}" to buy with your fomo cash.`);
-  const coin = oneCoin(m, c, 'One coin at a time — try "buy $10 of CLAUDIA at 1m mcap".');
+  const coin = oneCoin(m, c, 'One coin at a time — try "buy $10 of $TIPPY at 1m mcap".');
   if (isHint(coin)) return unknown(coin.hint);
   const left = unread(m, coin);
   const num = left.find((w) => NUMBER_LEFT.test(w) || COMMON.has(w));
@@ -1514,7 +1524,7 @@ function trailCore(m: Msg, c: Ctx): Intent {
   if (nu.length > 1) return unknown(`Trail by ${nu.slice(0, 2).map((n) => `${n}%`).join(' or ')}? Pick one, like "trail 20%".`);
   const trailPct = nu[0];
   if (!(trailPct > 0 && trailPct < 100)) return unknown('Pick a trail between 1% and 99% — like "trail 20%".');
-  const coin = oneCoin(m, c, 'One coin at a time — try "trail 20% on CLAUDIA".');
+  const coin = oneCoin(m, c, 'One coin at a time — try "trail 20% on $TIPPY".');
   if (isHint(coin)) return unknown(coin.hint);
   return { type: 'set-trail', coin, trailPct, afterX };
 }
@@ -1884,7 +1894,7 @@ const setSl: Handler = (m, c) => {
   }
   const kept = keepHint(keepRest, said.length > 0, sz.pct, where);
   if (kept) return unknown(kept);
-  const coin = oneCoin(m, c, 'One coin at a time — try "sl -30% on CLAUDIA".');
+  const coin = oneCoin(m, c, 'One coin at a time — try "sl -30% on $TIPPY".');
   if (isHint(coin)) return unknown(coin.hint);
   // No size here is the stop loss (sells the rest) — never because a size went unread.
   const left = unreadSize(m, c, coin, said.length > 0 || (keep != null && 'kept' in keep), where, 'sell', said.length === 1 ? sizeEg(size.vals, usds, lead) : null);
@@ -2038,7 +2048,7 @@ const addTp: Handler = (m, c) => {
     else if (counted && !hasTp)
       return unknown(`Sell all of it at ${levelWords(level)}? I sell a % of your bag or a $ amount, not a number of coins — say "sell all at ${typedLevel(level)}" or "sell 50% at ${typedLevel(level)}".`);
   }
-  const coin = oneCoin(m, c, 'One coin at a time — try "tp at 2x on CLAUDIA".');
+  const coin = oneCoin(m, c, 'One coin at a time — try "tp at 2x on $TIPPY".');
   if (isHint(coin)) return unknown(coin.hint);
   // ("exit" sells everything only when nothing else says how much: "exit hal at 2x" may be "exit half".)
   const left = unreadSize(m, c, coin, said.length > 0 || size.initials || (keep != null && 'kept' in keep), where, verb, said.length === 1 ? sizeEg(size.vals, usds, lead) : allOut ? 'all' : null);
@@ -2074,9 +2084,9 @@ const applyPreset: Handler = (m, c) => {
       if (size.pct != null && size.pct < 100) return unknown(`Sell ${pctWords(size.pct)} ${where}? Say "sell ${pctWords(size.pct)} ${where}" — I'll show you the order before anything happens.`);
       return unknown(`${up ? 'Take profit' : 'A stop'} ${where}? Say "sell all ${where}" — or a part, like "sell half ${where}".`);
     }
-    return unknown(`Which preset? Try "guard CLAUDIA with classic" — ${PRESETS}.`);
+    return unknown(`Which preset? Try "guard $TIPPY with classic" — ${PRESETS}.`);
   }
-  if (p === 'none') return unknown('To stop guarding a coin, say "stop guarding CLAUDIA".');
+  if (p === 'none') return unknown('To stop guarding a coin, say "stop guarding $TIPPY".');
   // "moonbag 10% at 10x": a size and a level — never a preset that replaces your levels.
   if (/\d/.test(m.s)) {
     const name = p === 'moon' ? 'moon bag' : p === 'safe' ? 'play it safe' : p;
@@ -2089,7 +2099,7 @@ const applyPreset: Handler = (m, c) => {
     return unknown(`A preset, or a level of your own? Say "guard with ${name}" for the preset — or the order itself, like "sell half at ${lvl ?? '2x'}".`);
   }
   m.take(/\b(?:guard|guarding|protect|protecting|cover|use|using|apply|applying|put|set|switch|preset|with|on)\b/);
-  const coin = oneCoin(m, c, 'One coin at a time — try "guard CLAUDIA with classic".');
+  const coin = oneCoin(m, c, 'One coin at a time — try "guard $TIPPY with classic".');
   if (isHint(coin)) return unknown(coin.hint);
   return { type: 'apply-preset', coin, preset: p };
 };
@@ -2304,7 +2314,7 @@ export function parse(message: string, opts: ParseOptions = {}): Intent {
   if (!text) return { type: 'help' };
   if (HELP.test(text)) return { type: 'help' };
   if (THANKS.test(text)) return unknown('Anytime! Tell me what to set up next — or say "help".');
-  if (ADDRESS.test(raw)) return unknown('I find coins by their ticker — say "$CLAUDIA", or open the coin on fomo and leave the name out.');
+  if (ADDRESS.test(raw)) return unknown('I find coins by their ticker — say "$TIPPY", or open the coin on fomo and leave the name out.');
   // "sell 10% at 700k cancel that": taken back in the same breath — do nothing.
   if (SELF_CANCEL.test(text)) return unknown("Okay — I won't do anything. Say what you'd like when you're ready.");
   const order = /\d/.test(text) || SELL_W.test(text) || BUY_V.test(text) || TP_W.test(text) || SL_W.test(text);
@@ -2375,6 +2385,6 @@ export function parse(message: string, opts: ParseOptions = {}): Intent {
   if (dollars.length === 1 && new Msg(base.s).words().every((w) => VOCAB.has(w))) return { type: 'show', coin: { symbol: dollars[0] } };
   const bare = noVerb(new Msg(base.s), c);
   if (bare) return bare;
-  if (base.has(/\b(?:cancel|remove|delete)\b/)) return unknown('Cancel what? Try "cancel my buy on CLAUDIA", "remove tp2" or "stop guarding CLAUDIA".');
+  if (base.has(/\b(?:cancel|remove|delete)\b/)) return unknown('Cancel what? Try "cancel my buy on $TIPPY", "remove tp2" or "stop guarding $TIPPY".');
   return unknown(GENERAL_HINT);
 }

@@ -8,12 +8,22 @@ import type { LevelRef, Plan, SellAction } from '../src/engine/types';
 import type { Notice } from '../src/shared/messages';
 import { sellFilledNotice } from '../src/shared/notices';
 import { browser } from './mock-browser';
-import { demoCtl, HARNESS_KEY } from './mock-fomo';
+import tippyIcon from '../assets/tippy-icon.svg?url';
+import { COIN, demoCtl, HARNESS_KEY } from './mock-fomo';
 
 const SUPPLY = demoCtl.supply;
 const ENTRY_MC = 300_000;
 const START_BAG = demoCtl.bag;
 const $ = (id: string) => document.getElementById(id)!;
+
+// The promo films on $TIPPY (?coin=tippy): Tippy's own avatar, and the pill says the prices are pretend.
+if (COIN.symbol === 'TIPPY') {
+  document.title = 'Tippy · demo';
+  document.querySelector('header .name')!.innerHTML = '<b>Tippy</b><span>$TIPPY</span>';
+  document.querySelector('header .pill')!.textContent = 'Demo · pretend prices';
+  const av = document.querySelector('header svg.avatar')!;
+  av.outerHTML = `<img class="avatar" src="${tippyIcon}" alt="" style="background:#143b31;object-fit:contain;padding:3px;box-sizing:border-box" />`;
+}
 
 // ---------- the price ----------
 /** A seeded random so every take moves the same way. */

@@ -1,4 +1,9 @@
 export const SITE_URL = 'https://tippybot.fun';
+/**
+ * Practice runs and dry run are developer tools: on in dev builds and tests, off
+ * in the store build, where every order is real and none of it shows.
+ */
+export const DEV_TOOLS: boolean = import.meta.env.DEV;
 /** Kill switch / banner / minimum version — data only, never selectors or code. */
 export const STATUS_URL = `${SITE_URL}/status.json`;
 export const ALERTS_URL: string = import.meta.env.WXT_ALERTS_URL ?? 'https://alerts.tippybot.fun';

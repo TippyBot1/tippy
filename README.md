@@ -14,7 +14,8 @@ What it does:
 - **Chart lines** on fomo's chart; drag one to move the order
 - **Chat**: "sell 10% at 700k", "tp half at 2x", "buy $20 at 300k mcap" — parsed locally, always confirmed before anything happens
 - **Fill notifications**: a pop-up on fomo, optional desktop notifications and Telegram alerts, plus a "Tippy stopped watching" warning
-- Practice runs (walk through a real trade and stop before the final button), dry run, auto-guard for new buys
+- **Auto-guard**: your preset goes on every new buy
+- Developer builds (`npm run dev`, tests) also have practice runs and dry run, which walk through a trade and stop before the final button. The store build leaves them out: every order is real.
 
 ```
 tippy/

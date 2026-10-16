@@ -29,7 +29,7 @@ SAFE BY DESIGN
 - It only runs on fomo.family, the one site it asks permission for.
 - Your orders are saved on your own computer, not on our servers.
 - Free and open source, so anyone can read the code: https://github.com/TippyBot1/tippy
-- No token, no account, no sign-up.
+- No account, no sign-up.
 
 WHAT IT DOES
 - Take profit at any market cap. For example: sell 25% at $1M and another 25% at $5M.
@@ -40,7 +40,6 @@ WHAT IT DOES
 - Your orders show as lines on fomo's chart. Drag a line to move the order.
 - Type orders in plain English, like "sell 10% at 700k" or "buy $20 at 300k mcap". Tippy shows exactly what it will do and waits for you to confirm.
 - A pop-up when an order fills or expires, plus optional desktop notifications and Telegram alerts.
-- Practice mode walks through a real trade and stops before the final click, so you can watch it work without spending anything.
 - Works on every chain you can trade on fomo's website.
 
 GOOD TO KNOW

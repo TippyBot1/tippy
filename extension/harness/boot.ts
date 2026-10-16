@@ -6,7 +6,7 @@ import { buildPlan } from '../src/engine/orders';
 import type { BuyInput } from '../src/engine/types';
 import type { Command } from '../src/shared/messages';
 import { browser, setCommandHandler } from './mock-browser';
-import { HARNESS_KEY } from './mock-fomo';
+import { COIN, HARNESS_KEY } from './mock-fomo';
 
 setCommandHandler((msg) => handleCommand(msg as Command));
 
@@ -17,8 +17,8 @@ if (new URLSearchParams(location.search).has('seed')) {
     key: HARNESS_KEY,
     networkId: 1399811149,
     address,
-    symbol: 'BONKLE',
-    name: 'Bonkle (pretend)',
+    symbol: COIN.symbol,
+    name: COIN.name,
     entry: { priceUSD: 0.0003, mc: 300_000, source: 'armed-at' },
     balance: 250_000,
     tps: [
@@ -38,8 +38,8 @@ if (new URLSearchParams(location.search).has('seed')) {
       key: HARNESS_KEY,
       networkId: 1399811149,
       address,
-      symbol: 'BONKLE',
-      name: 'Bonkle (pretend)',
+      symbol: COIN.symbol,
+      name: COIN.name,
       trigger: { kind: 'mc', value: 340_000 },
       ref: { priceUSD: 0.00042, mc: 420_000, source: 'armed-at' },
       usd: 10,

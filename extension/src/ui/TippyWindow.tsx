@@ -20,7 +20,7 @@ import { isLiveBuy } from '../engine/buys';
 import { currentX, getLevel, hasInFlight, isEditableStop, isEditableTp, levelLabel, normalizePlan, type PlanEdit, planEditWith, retryableLevels, sameRef } from '../engine/orders';
 import { describeTrigger, formatUsd, formatX, validatePlanInput } from '../engine/triggers';
 import type { BuyInput, BuyOrder, LevelRef, LevelStatus, Plan, PlanInput, Trigger } from '../engine/types';
-import { DEFAULT_MIN_SELL_USD } from '../shared/config';
+import { DEFAULT_MIN_SELL_USD, DEV_TOOLS } from '../shared/config';
 import type { CommandResult, PracticeResult } from '../shared/messages';
 import type { Preset } from '../shared/settings';
 import { cash, pctFmt } from './format';
@@ -529,9 +529,11 @@ export function TippyWindow({
             <button class={`tw-pill${toggles.alerts ? ' on' : ''}`} aria-pressed={toggles.alerts} title="Phone alerts" onClick={() => onToggle('alerts', !toggles.alerts)}>
               🔔
             </button>
-            <button class={`tw-pill${toggles.dryRun ? ' on warn' : ''}`} aria-pressed={toggles.dryRun} title="Dry run: practise without buying or selling" onClick={() => onToggle('dryRun', !toggles.dryRun)}>
-              🧪
-            </button>
+            {DEV_TOOLS && (
+              <button class={`tw-pill${toggles.dryRun ? ' on warn' : ''}`} aria-pressed={toggles.dryRun} title="Dry run: practise without buying or selling" onClick={() => onToggle('dryRun', !toggles.dryRun)}>
+                🧪
+              </button>
+            )}
           </>
         )}
       </div>
@@ -1001,13 +1003,15 @@ function SellTab({
           </div>
         </div>
       )}
-      <PracticeRun
-        side="sell"
-        token={token}
-        blocked={token.balance == null ? "Tippy can't see your bag yet." : token.balance <= 0 ? `You don't hold ${sym} — nothing to practise selling yet.` : null}
-        api={api}
-        last={practice}
-      />
+      {DEV_TOOLS && (
+        <PracticeRun
+          side="sell"
+          token={token}
+          blocked={token.balance == null ? "Tippy can't see your bag yet." : token.balance <= 0 ? `You don't hold ${sym} — nothing to practise selling yet.` : null}
+          api={api}
+          last={practice}
+        />
+      )}
       <div class="tw-quick" role="group" aria-label="Quick presets">
         <span class="tw-optl">Quick</span>
         {presets.map((p, i) => (

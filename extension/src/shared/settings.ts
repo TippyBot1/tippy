@@ -1,3 +1,5 @@
+import { DEV_TOOLS } from './config';
+
 export interface Preset {
   id: string;
   name: string;
@@ -114,5 +116,6 @@ export function withDefaults(s: Partial<Settings> | undefined): Settings {
     focus: { ...DEFAULT_SETTINGS.focus, ...s?.focus },
     telegram: { ...DEFAULT_SETTINGS.telegram, ...s?.telegram },
     presets: s?.presets?.length ? s.presets : DEFAULT_PRESETS,
+    dryRun: DEV_TOOLS && !!s?.dryRun,
   };
 }
