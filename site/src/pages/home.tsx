@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { useRef, useState } from 'preact/hooks';
 import '@ext/ui/tippy.css';
 import '@ext/ui/window.css';
 import '../site.css';
@@ -51,10 +52,52 @@ function Hero() {
           <div>
             <dt>Price</dt>
             <dd>
-              Free <small>no token</small>
+              Free <small>no fees</small>
             </dd>
           </div>
         </dl>
+      </div>
+    </section>
+  );
+}
+
+/** The 30-second promo: a poster with one big play button, then the browser's own controls. */
+function Watch() {
+  const video = useRef<HTMLVideoElement>(null);
+  const [started, setStarted] = useState(false);
+  return (
+    <section class="section section-watch" aria-labelledby="watch-h">
+      <div class="wrap watch">
+        <div class="watch-copy">
+          <p class="cell-label">Watch</p>
+          <h2 id="watch-h">Tippy in 30 seconds</h2>
+          <p>Set a take profit and a stop loss, type an order in plain words, and see Tippy sell the moment the price gets there.</p>
+          <a class="pillar-go" href="/demo">
+            Try it yourself in the demo <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <div class={`watch-frame${started ? ' is-started' : ''}`}>
+          <video
+            ref={video}
+            src="/media/tippy-promo.mp4"
+            poster="/media/tippy-promo-poster.jpg"
+            width={1920}
+            height={1080}
+            preload="metadata"
+            playsInline
+            controls={started}
+            onPlay={() => setStarted(true)}
+            aria-label="Tippy in 30 seconds: setting a take profit and stop loss, typing an order, and Tippy selling when the price hits (demo prices)"
+          />
+          {!started && (
+            <button class="watch-play" onClick={() => void video.current?.play()} aria-label="Play the 30-second video">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
+              </svg>
+              <span>Play · 0:30</span>
+            </button>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -126,6 +169,7 @@ if (['how', 'features', 'demo', 'safety', 'faq'].includes(OLD)) location.replace
 render(
   <Page current="home">
     <Hero />
+    <Watch />
     <Pillars />
     <Closing />
   </Page>,

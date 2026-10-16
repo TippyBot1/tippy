@@ -11,18 +11,6 @@ import type { Swap } from '../market';
 import { CandleChart } from './CandleChart';
 import { TradePanel } from './TradePanel';
 
-/** The other coins in the list: pretend, and only $DEMO opens. */
-const LIST: { sym: string; mc: number; chg: number; price: number; color: string }[] = [
-  { sym: 'BONKLE', mc: 412_000, chg: 37.3, price: 0.000412, color: '#ff9f43' },
-  { sym: 'FROGGO', mc: 2_150_000, chg: -12.4, price: 0.00215, color: '#58c472' },
-  { sym: 'MOONCAT', mc: 14_300_000, chg: 18.8, price: 0.0143, color: '#a78bfa' },
-  { sym: 'WAGGLE', mc: 1_380_000, chg: 720.3, price: 0.00138, color: '#f472b6' },
-  { sym: 'PIXEL', mc: 91_900_000, chg: -5.5, price: 0.0919, color: '#60a5fa' },
-  { sym: 'NOODLE', mc: 5_790_000, chg: -32.2, price: 0.00579, color: '#fbbf24' },
-  { sym: 'ZAPPY', mc: 60_900_000, chg: 13.6, price: 0.0609, color: '#34d399' },
-  { sym: 'HONK', mc: 324_500, chg: 8.7, price: 0.000325, color: '#f87171' },
-];
-
 const pct = (v: number) => `${v >= 0 ? '▲' : '▼'}${Math.abs(v).toFixed(2)}%`;
 const Up = ({ v }: { v: number }) => <span class={v >= 0 ? 'up' : 'down'}>{pct(v)}</span>;
 
@@ -43,7 +31,16 @@ export function FomoPage({
   onTrade,
   onNote,
   children,
+  sub,
+  about,
+  clock0,
+  tag,
 }: {
+  /** Under the coin name (default: "<name> · 1d · pretend"). */
+  sub?: string;
+  about?: string;
+  clock0?: number;
+  tag?: string;
   symbol: string;
   name: string;
   supply: number;
@@ -69,7 +66,6 @@ export function FomoPage({
   const day = (price / history[0] - 1) * 100;
   const value = bag * price;
   const pnl = entry > 0 ? (price / entry - 1) * 100 : 0;
-  const others = () => onNote(`Only $${symbol} is live in this demo — the other coins in the list are just for show.`);
 
   return (
     <div class="fx">
@@ -131,23 +127,6 @@ export function FomoPage({
                 <Up v={day} />
               </span>
             </li>
-            {LIST.map((c) => (
-              <li key={c.sym}>
-                <button onClick={others} title={`$${c.sym} (pretend)`}>
-                  <span class="fx-av" style={{ background: c.color }} aria-hidden="true">
-                    {c.sym[0]}
-                  </span>
-                  <span class="fx-li-n">
-                    <b>{c.sym}</b>
-                    <small>{formatUsd(c.price)}</small>
-                  </span>
-                  <span class="fx-li-v">
-                    <b>{formatUsd(c.mc)} MC</b>
-                    <Up v={c.chg} />
-                  </span>
-                </button>
-              </li>
-            ))}
           </ul>
         </aside>
 
@@ -159,7 +138,7 @@ export function FomoPage({
             <div class="fx-name">
               <b>{symbol}</b>
               <small>
-                {name} · 1d · pretend
+                {sub ?? `${name} · 1d · pretend`}
               </small>
             </div>
             <dl class="fx-stats">
@@ -203,7 +182,7 @@ export function FomoPage({
             <span class="fx-tools-r">Chart ▾</span>
           </div>
           <div class="fx-chart">
-            <CandleChart history={history} tick={tick} supply={supply} name={name} lines={lines} swaps={swaps} preview={preview} onDrop={onDrop} />
+            <CandleChart history={history} tick={tick} supply={supply} name={name} lines={lines} swaps={swaps} preview={preview} onDrop={onDrop} clock0={clock0} tag={tag} />
           </div>
           <div class="fx-range" aria-hidden="true">
             <span>1D</span>
@@ -255,7 +234,7 @@ export function FomoPage({
           <TradePanel symbol={symbol} price={price} bag={bag} cash={cash} onTrade={onTrade} />
           <div class="fx-card fx-about">
             <h3>About {symbol}</h3>
-            <p>A pretend coin for the Tippy demo. Every number here is made up.</p>
+            <p>{about ?? 'A pretend coin for the Tippy demo. Every number here is made up.'}</p>
             <div class="fx-tf">
               <span>
                 5M <Up v={since(5)} />

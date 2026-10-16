@@ -1,4 +1,4 @@
-// The home page's product shot: Tippy's real window on a pretend $BONKLE bag with
+// The home page's product shot: Tippy's real window on a pretend $TIPPY bag with
 // three orders on, drawn over its own order lines on one log scale, a take profit
 // typed in and ready to add. It's a picture, not a demo: it doesn't move or take
 // clicks, and clicking it opens the demo page (the one place to try Tippy).
@@ -28,8 +28,8 @@ const yPct = (mc: number) => 5 + ((Math.log(TOP) - Math.log(mc)) / Math.log(TOP 
 
 export function HeroShot() {
   const m = useMarket({
-    symbol: 'BONKLE',
-    name: 'Bonkle (example)',
+    symbol: 'TIPPY',
+    name: 'Tippy (example)',
     startPrice: START,
     startBag: 250_000,
     startCash: 25,

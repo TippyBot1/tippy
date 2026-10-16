@@ -1288,3 +1288,80 @@
   font: 600 14px var(--sans);
   cursor: pointer;
 }
+
+/* ---------- /demo?film: the browser window alone on a stage, for the feature videos ---------- */
+.dm-film {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  max-width: none;
+  margin: 0;
+  padding: 45px 80px;
+  transform-origin: 0 0;
+  background: radial-gradient(1200px 700px at 70% 0%, rgba(94, 230, 181, 0.07), transparent 60%), radial-gradient(900px 600px at 0% 100%, rgba(81, 106, 246, 0.08), transparent 60%), #07060f;
+}
+.dm-film .dm-bar,
+.dm-film .dm-side {
+  display: none;
+}
+.dm-film .dm-stage {
+  display: block;
+}
+.dm-film .bw {
+  height: 990px;
+  min-height: 0;
+  max-height: none;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.dm-film .site-demo .tw,
+.site-demo .dm-film .tw {
+  max-height: 760px;
+}
+/* the pretend phone, as a phone */
+.dm-film .phone {
+  position: absolute;
+  left: 120px;
+  bottom: 70px;
+  width: 340px;
+  min-height: 520px;
+  padding: 54px 14px 20px;
+  border: 10px solid #1a1b22;
+  border-radius: 46px;
+  background: #0e1621;
+  box-shadow: 0 0 0 2px #2c2e38, 0 40px 100px rgba(0, 0, 0, 0.7);
+  animation: film-phone 0.5s cubic-bezier(0.2, 1.1, 0.3, 1) both;
+}
+.dm-film .phone::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 96px;
+  height: 26px;
+  border-radius: 14px;
+  background: #000;
+  transform: translateX(-50%);
+}
+.dm-film .phone-head {
+  margin: 0 -14px 10px;
+  padding: 0 16px 10px;
+  border-bottom: 1px solid #1f2b38;
+}
+.dm-film .phone-head b {
+  font-size: 15px;
+}
+.dm-film .phone-head button {
+  display: none;
+}
+.dm-film .phone p {
+  font-size: 14px;
+  background: #182533;
+}
+@keyframes film-phone {
+  from {
+    opacity: 0;
+    transform: translateY(80px) rotate(-3deg);
+  }
+}

@@ -30,6 +30,8 @@ export function CandleChart({
   swaps,
   preview,
   onDrop,
+  clock0 = 9 * 60,
+  tag = 'pretend',
 }: {
   history: number[];
   /** The latest price tick: the last candle. */
@@ -41,6 +43,10 @@ export function CandleChart({
   /** A dropped line waiting for Move / Keep in Tippy's window: drawn where it was dropped. */
   preview: ChartMove | null;
   onDrop: (line: ChartLine, move: ChartMove) => void;
+  /** Time of day (minutes) of the last candle at tick 0. */
+  clock0?: number;
+  /** After the name in the legend: "pretend", or "replay" for a real trade. */
+  tag?: string;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 720, h: 380 });
@@ -87,24 +93,27 @@ export function CandleChart({
   const last = candles[n - 1];
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => top + f * (bottom - top));
   const minuteAt = (i: number) => {
-    const m = (9 * 60 + tick - (n - 1 - i)) % (24 * 60);
+    const m = (clock0 + tick - (n - 1 - i)) % (24 * 60);
     return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   };
   const every = Math.max(10, Math.round(n / Math.max(2, Math.floor(plotW / 110))));
   const marks = swaps.map((s) => ({ ...s, i: n - 1 - (tick - s.tick) })).filter((s) => s.i >= 0 && s.i < n);
 
+  /** The pointer's height in the chart's own units (the films zoom the page with a CSS transform). */
+  const localY = (e: PointerEvent) => {
+    const rect = box.current!.getBoundingClientRect();
+    return ((e.clientY - rect.top) * box.current!.offsetHeight) / (rect.height || 1);
+  };
   /** Drag a line by its edge, like on fomo's chart: Tippy asks before moving anything. */
   const down = (l: ChartLine) => (e: PointerEvent) => {
     if (!l.draggable) return;
     e.preventDefault();
-    const rect = box.current!.getBoundingClientRect();
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
-    setDrag({ id: l.id, y: e.clientY - rect.top });
+    setDrag({ id: l.id, y: localY(e) });
   };
   const move = (e: PointerEvent) => {
     if (!drag) return;
-    const rect = box.current!.getBoundingClientRect();
-    setDrag({ id: drag.id, y: Math.min(bottom, Math.max(top, e.clientY - rect.top)) });
+    setDrag({ id: drag.id, y: Math.min(bottom, Math.max(top, localY(e))) });
   };
   const up = () => {
     if (!drag) return;
@@ -119,7 +128,7 @@ export function CandleChart({
     <div class={`cc${drag ? ' is-dragging' : ''}`} ref={box} onPointerMove={move} onPointerUp={up} onPointerCancel={() => setDrag(null)}>
       <div class="cc-legend" aria-hidden="true">
         <p>
-          {name} · 1 · pretend <i>O</i>
+          {name} · 1 · {tag} <i>O</i>
           <b class={chg >= 0 ? 'up' : 'down'}>{formatUsd(last.o)}</b> <i>H</i>
           <b class={chg >= 0 ? 'up' : 'down'}>{formatUsd(last.h)}</b> <i>L</i>
           <b class={chg >= 0 ? 'up' : 'down'}>{formatUsd(last.l)}</b> <i>C</i>

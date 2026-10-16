@@ -7,9 +7,18 @@ import '../demo/demo.css';
 import { DemoApp } from '../demo/DemoApp';
 import { Page } from '../layout';
 
+// /demo?film: just the browser window on a plain stage, for recording the feature videos.
+const film = new URLSearchParams(location.search).has('film');
+
 render(
-  <Page current="demo" class="site-demo">
-    <DemoApp />
-  </Page>,
+  film ? (
+    <div class="site site-demo">
+      <DemoApp film />
+    </div>
+  ) : (
+    <Page current="demo" class="site-demo">
+      <DemoApp />
+    </Page>
+  ),
   document.getElementById('app')!,
 );

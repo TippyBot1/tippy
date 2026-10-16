@@ -2,9 +2,13 @@
   // tippybot.fun — static site on Cloudflare Workers static assets.
   "name": "tippybot-site",
   "compatibility_date": "2026-10-01",
+  // Only /media/* runs the worker (byte ranges for the promo video); every other path is served straight from the files.
+  "main": "worker.ts",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "404-page"
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/media/*"]
   },
   // Needs tippybot.fun to be a zone in this Cloudflare account (nameservers moved
   // from Porkbun). Wrangler then creates the DNS records and certificates.

@@ -95,7 +95,7 @@ export function TradePanel({
         </p>
       ) : (
         <p class="fx-warn">
-          <span aria-hidden="true">⚠</span> Pretend token · you pressing, not Tippy
+          <span aria-hidden="true">⚠</span> Pretend money · you pressing, not Tippy
         </p>
       )}
     </div>

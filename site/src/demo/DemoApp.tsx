@@ -9,7 +9,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { cancelBuy, isLiveBuy, resolveUnknownBuy } from '@ext/engine/buys';
-import { buildPlan, cancelPlan, pausePlan, planEditWith, resumePlan, undoDryRunFills } from '@ext/engine/orders';
+import { buildPlan, planEditWith, undoDryRunFills } from '@ext/engine/orders';
 import { formatUsd } from '@ext/engine/triggers';
 import type { Plan } from '@ext/engine/types';
 import { chartLinesFor, describeMove, stopTooSmall, triggerFromMove, type ChartLine, type ChartMove } from '@ext/shared/chartLines';
@@ -32,44 +32,30 @@ import { MIN_USD, seedPath, SUPPLY, useMarket } from '../market';
 import { linkStatus, markLinked, newLinkId } from './sim/alerts';
 import { readStore, setCommandHandler, setOpenHandler, sim, writeStore } from './sim/browser';
 import { FomoPage } from './FomoPage';
+import { REPLAY } from './replay';
 
-/** $DEMO opens at an $800K market cap with a $100 bag and orders on. */
+/** $TIPPY opens at an $800K market cap with a $100 bag and orders on. */
 const START = 0.0008;
 const BAG = 125_000;
 const CASH = 150;
-const KEY = `demo:1399811149`;
 /** What the demo's QR code opens: this page (the real one opens @TippyAlertsBot). */
 const DEMO_TG = 'https://tippybot.fun/demo';
 
-/** A second pretend coin, guarded, so the toolbar popup shows "every order on every coin". */
-function otherCoin(): Plan {
-  const now = Date.now();
-  const p = buildPlan({
-    id: 'bonkle-guard',
-    key: 'bonkle:1399811149',
-    networkId: 1399811149,
-    address: 'bonkle',
-    symbol: 'BONKLE',
-    name: 'Bonkle (pretend)',
-    entry: { priceUSD: 0.0003, mc: 300_000, source: 'armed-at' },
-    balance: 250_000,
-    tps: [
-      { trigger: { kind: 'x', value: 2 }, sellPct: 50 },
-      { trigger: { kind: 'x', value: 5 }, sellPct: 25 },
-    ],
-    sl: { trigger: { kind: 'x', value: 0.7 } },
-    trailing: null,
-    origin: 'auto-guard',
-    now: now - 3_600_000,
-  });
-  p.lastPrice = 0.000412;
-  p.lastMc = 412_000;
-  return p;
-}
+/** /demo?film: the feature videos (see DemoApp's `film`). */
+const FILM = new URLSearchParams(location.search).has('film');
+/** The coin on the page: $TIPPY, or a replayed real trade. */
+const COIN: { symbol: string; name: string; sub?: string; about?: string } = REPLAY ?? {
+  symbol: 'TIPPY',
+  name: 'Tippy',
+  sub: 'Tippy · 1d · demo prices',
+  about: 'Tippy running on $TIPPY. The prices and money on this page are pretend.',
+};
+const KEY = `${COIN.symbol.toLowerCase()}:1399811149`;
 
-// The pretend extension's storage before anything renders: fresh install, not set up yet.
+// The pretend extension's storage before anything renders: a fresh install, not set up yet
+// (the feature videos start set up, so nothing nags).
 void writeStore({
-  settings: withDefaults({ deskConsent: false, onboarded: false }),
+  settings: withDefaults(FILM ? { deskConsent: true, onboarded: true, keepActiveDone: true, loginItemDone: true } : { deskConsent: false, onboarded: false }),
   status: { ...DEFAULT_STATUS, health: 'watching', message: 'Watching your coins.' },
   plans: {},
   buys: {},
@@ -78,11 +64,15 @@ void writeStore({
 });
 
 type View = 'coin' | 'settings' | 'welcome';
-const TAB_TITLE: Record<View, string> = { coin: '$DEMO · pretend coin', settings: 'Tippy settings', welcome: 'Welcome to Tippy' };
+const TAB_TITLE: Record<View, string> = { coin: REPLAY ? `$${REPLAY.symbol} · replay` : `$${COIN.symbol} · demo`, settings: 'Tippy settings', welcome: 'Welcome to Tippy' };
 const ADDRESS: Record<View, ComponentChildren> = {
-  coin: (
+  coin: REPLAY ? (
     <>
-      <b>Pretend coin page</b> — laid out like a coin page on fomo.family, where Tippy runs
+      <b>Replay of a real trade</b> — fomo’s real prices, shown on Tippy’s demo page
+    </>
+  ) : (
+    <>
+      <b>Demo page</b> — pretend prices, laid out like a coin page on fomo.family, where Tippy runs
     </>
   ),
   settings: 'chrome-extension://tippy/options.html',
@@ -109,21 +99,23 @@ const TASKS: { id: TaskId; title: string; how: string }[] = [
   { id: 'guard', title: 'Auto-guard a new buy', how: 'Turn on Auto (🛡) in Tippy’s footer, stop the orders, then buy in the trade panel.' },
 ];
 
-export function DemoApp() {
+export function DemoApp({ film = false }: { film?: boolean }) {
   const state = useTippyState();
   const settingsRef = useRef<Settings>(withDefaults(undefined));
   if (state) settingsRef.current = state.settings;
   const s = settingsRef.current;
 
   const m = useMarket({
-    symbol: 'DEMO',
-    name: 'Demo coin',
-    startPrice: START,
-    startBag: BAG,
-    startCash: CASH,
-    historyLen: 120,
-    seedHistory: () => seedPath(START, START * 0.55, 120, 11),
+    symbol: COIN.symbol,
+    name: COIN.name,
+    startPrice: REPLAY ? REPLAY.seed[REPLAY.seed.length - 1] / SUPPLY : START,
+    startBag: REPLAY ? 0 : BAG,
+    startCash: REPLAY?.cash ?? CASH,
+    historyLen: REPLAY ? 90 : 120,
+    seedHistory: REPLAY ? () => REPLAY!.seed.map((mc) => mc / SUPPLY) : () => seedPath(START, START * 0.55, 120, 11),
+    // /demo?film&fresh: a film that starts with no orders on (a replay starts before the trade).
     seedPlan: (base) => {
+      if (REPLAY || (film && new URLSearchParams(location.search).has('fresh'))) return null;
       const p = buildPlan({
         ...base,
         id: 'demo-seed',
@@ -138,11 +130,12 @@ export function DemoApp() {
       return p;
     },
     getSettings: () => settingsRef.current,
+    // The feature films script the market; the live demo starts it when an order goes on.
+    autoKick: !film,
     onSettings: (patch) => void command({ type: 'SET_SETTINGS', patch }),
   });
   const live = useRef(m);
   live.current = m;
-  const other = useRef<Plan>(otherCoin());
 
   /** Orders you add (in the window, the chat or by dragging) tick off the matching tasks. */
   const counted = (before: Plan | null, after: Plan | undefined) => {
@@ -191,7 +184,8 @@ export function DemoApp() {
   const viewRef = useRef<HTMLDivElement>(null);
 
   const tick = (id: TaskId) => setDone((d) => (d.has(id) ? d : new Set([...d, id])));
-  const say = (text: string) => setNote({ id: Date.now(), text });
+  // The feature videos carry their own captions: no demo notes in them.
+  const say = (text: string) => !film && setNote({ id: Date.now(), text });
   const phoneSay = (text: string) => setPhone((xs) => [...xs.slice(-2), { id: Date.now() + Math.random(), text }]);
 
   useEffect(() => {
@@ -205,7 +199,7 @@ export function DemoApp() {
 
   // The pretend extension's storage follows the market, so the popup and the chat see the same orders.
   useEffect(() => {
-    const plans: Record<string, Plan> = { [other.current.id]: other.current };
+    const plans: Record<string, Plan> = {};
     if (m.plan) plans[m.plan.id] = m.plan;
     void writeStore({ plans, buys: Object.fromEntries(m.buys.map((o) => [o.id, o])), notices: m.notices, practice: m.practice });
   }, [m.plan, m.buys, m.notices, m.practice]);
@@ -238,10 +232,6 @@ export function DemoApp() {
     const now = Date.now();
     const cur = settingsRef.current;
     const mine = (id: string) => mk.plan?.id === id;
-    const otherPlan = (fn: (p: Plan) => Plan) => {
-      other.current = fn(other.current);
-      void writeStore({ plans: { ...(readStore<Record<string, Plan>>('plans') ?? {}), [other.current.id]: other.current } });
-    };
     switch (cmd.type) {
       case 'SET_SETTINGS': {
         if (cur.dryRun && cmd.patch.dryRun === false) mk.setPlan((p) => p && undoDryRunFills(p, now));
@@ -252,11 +242,11 @@ export function DemoApp() {
         await writeStore({ settings: { ...cur, paused: cmd.paused } });
         return { ok: true };
       case 'PAUSE_PLAN':
-        return mine(cmd.planId) ? mk.api.pause(cmd.planId) : (otherPlan((p) => pausePlan(p, now)), { ok: true });
+        return mine(cmd.planId) ? mk.api.pause(cmd.planId) : { ok: false, error: 'That order is gone.' };
       case 'RESUME_PLAN':
-        return mine(cmd.planId) ? mk.api.resume(cmd.planId) : (otherPlan((p) => resumePlan(p, now)), { ok: true });
+        return mine(cmd.planId) ? mk.api.resume(cmd.planId) : { ok: false, error: 'That order is gone.' };
       case 'CANCEL_PLAN':
-        return mine(cmd.planId) ? mk.api.cancel(cmd.planId) : (otherPlan((p) => cancelPlan(p, now)), { ok: true });
+        return mine(cmd.planId) ? mk.api.cancel(cmd.planId) : { ok: false, error: 'That order is gone.' };
       case 'CANCEL_BUY':
         return mk.api.cancelBuy(cmd.orderId);
       case 'RESOLVE_BUY':
@@ -275,7 +265,7 @@ export function DemoApp() {
         await writeStore({ settings: { ...cur, deskConsent: true } });
         return { ok: true };
       case 'TEST_ALERT':
-        mk.notice({ key: '', title: '👋 Test from Tippy', text: 'Alerts are working. When an order fills you’ll see “Tippy filled order — Tippy sold 25% of $DEMO at $1.4M MC.”', tone: 'info' });
+        mk.notice({ key: '', title: '👋 Test from Tippy', text: 'Alerts are working. When an order fills you’ll see “Tippy filled order — Tippy sold 25% of $TIPPY at $1.4M MC.”', tone: 'info' });
         return { ok: true };
       case 'TELEGRAM_CONNECT': {
         if (cur.telegram.linked && cur.telegram.linkId) return { ok: true, telegram: { url: DEMO_TG, linked: true } };
@@ -317,7 +307,7 @@ export function DemoApp() {
       say('Pretend: you opened fomo.family and you’re logged in.');
     } else if (url.includes('fomo.family/tokens/')) {
       if (url.endsWith('/demo')) go('coin');
-      else say('That’s another pretend coin — only $DEMO has a page in this demo.');
+      else say('Only $TIPPY has a page in this demo.');
     } else if (url.startsWith('chrome://') || url.startsWith('edge://')) say('In Chrome this opens Settings → Performance, where you add fomo.family to “Always keep these sites active”.');
     else window.open(url, '_blank', 'noopener');
   };
@@ -418,10 +408,15 @@ export function DemoApp() {
     if (!page || !host) return;
     const pr = page.getBoundingClientRect();
     const hr = host.getBoundingClientRect();
-    const dx = e.clientX - hr.left;
-    const dy = e.clientY - hr.top;
+    // the films zoom the page with a CSS transform: screen pixels → the page's own
+    const k = pr.width / (page.offsetWidth || pr.width);
+    const dx = (e.clientX - hr.left) / k;
+    const dy = (e.clientY - hr.top) / k;
     const onMove = (ev: PointerEvent) =>
-      setPos({ x: Math.min(pr.width - hr.width, Math.max(0, ev.clientX - pr.left - dx)), y: Math.min(pr.height - 40, Math.max(0, ev.clientY - pr.top - dy)) });
+      setPos({
+        x: Math.min((pr.width - hr.width) / k, Math.max(0, (ev.clientX - pr.left) / k - dx)),
+        y: Math.min(pr.height / k - 40, Math.max(0, (ev.clientY - pr.top) / k - dy)),
+      });
     const onUp = () => (window.removeEventListener('pointermove', onMove), window.removeEventListener('pointerup', onUp));
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
@@ -462,7 +457,7 @@ export function DemoApp() {
     }, 160);
   };
 
-  const livePlans = [plan, other.current].filter((p): p is Plan => !!p && (p.state === 'armed' || p.state === 'paused'));
+  const livePlans = [plan].filter((p): p is Plan => !!p && (p.state === 'armed' || p.state === 'paused'));
   const badge = livePlans.length + m.buys.filter(isLiveBuy).length;
   const mc = m.price * SUPPLY;
   const chg = (m.price / START - 1) * 100;
@@ -491,16 +486,33 @@ export function DemoApp() {
     </div>
   );
 
+  // Feature films (/demo?film): the capture script drives the demo through these.
+  if (film)
+    (window as unknown as { __film: unknown }).__film = {
+      market: () => live.current,
+      replay: REPLAY,
+      settings: () => settingsRef.current,
+      command,
+      go,
+      setPopup,
+      setBell,
+      setMinimized,
+      setPos,
+      phoneSay,
+      setPhoneStart,
+      clearPhone: () => (setPhone([]), setPhoneStart(false)),
+    };
+
   return (
-    <div class="dm" data-flash={flash ?? undefined}>
+    <div class={`dm${film ? ' dm-film' : ''}`} id={film ? 'film-cam' : undefined} data-flash={flash ?? undefined}>
       <div class="dm-bar">
         <div class="dm-title">
           <h1>Demo</h1>
-          <p>Pretend coin and money · the real Tippy</p>
+          <p>Pretend prices and money · the real Tippy</p>
         </div>
         <div class="dm-market" role="group" aria-label="Move the pretend market">
           <span class="dm-q">
-            <small>$DEMO market cap</small>
+            <small>${COIN.symbol} market cap</small>
             <b>{formatUsd(mc)}</b>
             <em class={chg >= 0 ? 'up' : 'down'}>
               {chg >= 0 ? '+' : '−'}
@@ -520,7 +532,6 @@ export function DemoApp() {
             class="dbtn dbtn-icon"
             onClick={() => {
               m.reset();
-              other.current = otherCoin();
               setDragged(null);
               setPos(null);
               setMinimized(false);
@@ -581,8 +592,12 @@ export function DemoApp() {
           <div class="bw-view" ref={viewRef}>
             <div class="fx-wrap" ref={coinRef} hidden={view !== 'coin'}>
               <FomoPage
-                symbol="DEMO"
-                name="Demo coin"
+                symbol={COIN.symbol}
+                name={COIN.name}
+                sub={COIN.sub}
+                about={COIN.about}
+                clock0={REPLAY?.clock0}
+                tag={REPLAY ? 'replay' : undefined}
                 supply={SUPPLY}
                 price={m.price}
                 history={m.history}

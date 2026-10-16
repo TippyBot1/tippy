@@ -28,7 +28,7 @@ function Steps() {
             <h3>Open a coin on fomo</h3>
             <p>Log in to fomo.family like you always do. Tippy’s window opens beside the coin with your bag, your cash and the market cap now.</p>
             <code class="readout">
-              $BONKLE <b>$412K</b> <i>· bag</i> $103
+              $TIPPY <b>$412K</b> <i>· bag</i> $103
             </code>
           </li>
           <li>

@@ -154,7 +154,7 @@ function Bento() {
               <p class="chat-me">sl half at 350k</p>
               <div class="chat-card">
                 <p>
-                  Add a stop on <b>$BONKLE</b>: sell 50% if it drops to <b>$350K</b> MC (<em class="down">−15.0%</em> from now).
+                  Add a stop on <b>$TIPPY</b>: sell 50% if it drops to <b>$350K</b> MC (<em class="down">−15.0%</em> from now).
                 </p>
                 <div>
                   <span class="mc-btn mc-btn-go">Add it</span>
@@ -175,7 +175,7 @@ function Bento() {
               <div class="note note-good">
                 <span class="note-ch">On fomo</span>
                 <b>Tippy filled an order</b>
-                <span>Sold 50% of $BONKLE at $600K MC (take profit 1).</span>
+                <span>Sold 50% of $TIPPY at $600K MC (take profit 1).</span>
               </div>
               <div class="note note-warn">
                 <span class="note-ch">Telegram</span>
@@ -189,12 +189,12 @@ function Bento() {
             <div class="presets-copy">
               <p class="cell-label">Presets &amp; Auto-guard</p>
               <h3>Your plans, one tap away</h3>
-              <p>Three presets sit in Tippy’s window as P1, P2 and P3. Change them in settings. Turn on Auto-guard and your starred preset goes on every new buy — even one made on your phone. Practise first with Dry run: Tippy does everything but press the button.</p>
+              <p>Three presets sit in Tippy’s window as P1, P2 and P3. Change them in settings. Turn on Auto-guard and your starred preset goes on every new buy — even one made on your phone.</p>
               <a class="cell-go" href="/demo#settings">
                 Open the settings in the demo <span aria-hidden="true">→</span>
               </a>
             </div>
-            <div class="presets-art art" role="img" aria-label="Three presets — Play it safe, Classic (starred for Auto-guard) and Moon bag — and the Auto-guard and Dry run switches">
+            <div class="presets-art art" role="img" aria-label="Three presets — Play it safe, Classic (starred for Auto-guard) and Moon bag — and the Auto-guard switch">
               <div class="pz">
                 <span class="pz-k">P1</span>
                 <b>Play it safe</b>
@@ -214,9 +214,6 @@ function Bento() {
               <div class="pz-sw">
                 <span>
                   Auto-guard new buys <i class="state state-on">On</i>
-                </span>
-                <span>
-                  Dry run <i class="state state-off">Off</i>
                 </span>
               </div>
             </div>

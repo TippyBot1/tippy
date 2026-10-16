@@ -12,13 +12,13 @@ const FAQ: [string, ComponentChildren][] = [
   ],
   [
     'How do phone alerts work?',
-    'Tap 🔔 at the bottom of Tippy’s window, then scan the code with your phone’s camera (or open Telegram on your computer) and tap Start in @TippyAlertsBot. That’s it — no bot to make, no token, no chat ID. You get a short message when an order fills, when Tippy needs you, or if it stops watching for 10 minutes while you have orders on. Messages say only the coin and what happened, never your wallet or login, and the bot never messages first.',
+    'Tap 🔔 at the bottom of Tippy’s window, then scan the code with your phone’s camera (or open Telegram on your computer) and tap Start in @TippyAlertsBot. That’s it — no bot to make, no bot token, no chat ID. You get a short message when an order fills, when Tippy needs you, or if it stops watching for 10 minutes while you have orders on. Messages say only the coin and what happened, never your wallet or login, and the bot never messages first.',
   ],
   ['Will my stop always fill at my price?', 'No bot can promise that. Sells are market orders through fomo’s own Sell button, so in a fast dump or a thin pool the fill can land below your level. Tippy shows the price impact and lets you set limits on it.'],
   [
     'Can I try it without trading?',
     <>
-      Yes. Turn on Dry run — the flask switch at the bottom of Tippy’s window — and Tippy walks through each order but stops before pressing Buy or Sell. A practice run goes one step further: it walks through a real sell or buy on fomo and stops right before the final button. Or try <a href="/demo">the demo</a>, which never touches fomo.
+      Yes, in <a href="/demo">the demo</a>. It’s Tippy’s real window on a pretend coin, so you can set orders and watch them fill without touching fomo. Inside fomo every order Tippy places is real, so start small — Tippy always shows you exactly what it will do before anything is set.
     </>,
   ],
   ['Does it work on my phone?', 'Tippy runs on your computer, in Chrome, Brave or Edge, while you’re logged in to fomo.family. You can still trade on your phone — Tippy sees those coins too, and Telegram alerts land on your phone.'],
@@ -30,7 +30,7 @@ const FAQ: [string, ComponentChildren][] = [
       : 'Soon. Tippy is waiting on its Chrome Web Store listing; until then the code is on GitHub. When it’s live, install it only from the official listing — never from a ZIP file or a link someone sends you.',
   ],
   ['Is Tippy made by fomo?', 'No. Tippy is an independent, open-source project and isn’t affiliated with or endorsed by fomo. If fomo changes its app, Tippy pauses safely instead of guessing.'],
-  ['What does it cost?', 'Nothing. Tippy is free — no token, no subscription, no fees on your trades.'],
+  ['What does it cost?', 'Nothing. Tippy is free — no subscription, no fees on your trades.'],
   ['Which chains?', 'Everything fomo trades on the web: Solana, Base, BNB Chain, Monad and Robinhood Chain.'],
 ];
 

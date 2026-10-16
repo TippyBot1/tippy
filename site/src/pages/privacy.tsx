@@ -42,7 +42,7 @@ function Privacy() {
             <h2>What Tippy sends, and only if you turn it on</h2>
             <ul>
               <li>
-                <b>Telegram alerts (optional).</b> When something happens, Tippy sends a short message (for example “Sold 50% of $WIF at 2x, $41”) plus a random link ID to alerts.tippybot.fun, which forwards it to your Telegram chat. While it’s linked, Tippy also checks in every two minutes with how many orders you have on. We store that link ID, your Telegram chat ID, how many orders you have on, and when we last heard from Tippy (so we can warn you if it stops watching). Type /stop to the bot or tap Disconnect to delete the link.
+                <b>Telegram alerts (optional).</b> When something happens, Tippy sends a short message (for example “Sold 50% of $TIPPY at 2x, $41”) plus a random link ID to alerts.tippybot.fun, which forwards it to your Telegram chat. While it’s linked, Tippy also checks in every two minutes with how many orders you have on. We store that link ID, your Telegram chat ID, how many orders you have on, and when we last heard from Tippy (so we can warn you if it stops watching). Type /stop to the bot or tap Disconnect to delete the link.
               </li>
               <li>
                 <b>Safety status.</b> Every 30 minutes Tippy downloads tippybot.fun/status.json — a tiny public file that can pause Tippy for everyone if fomo changes something. Nothing about you is sent.

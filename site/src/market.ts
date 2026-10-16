@@ -43,6 +43,8 @@ export interface MarketConfig {
   startCash: number;
   /** Ticks kept on the chart. */
   historyLen?: number;
+  /** Start the market moving when an order goes on (default). The feature films script it instead. */
+  autoKick?: boolean;
   /** Random-walk size per tick. */
   vol?: number;
   tickMs?: number;
@@ -106,6 +108,10 @@ export function useMarket(cfg: MarketConfig) {
   const tickNo = useRef(0);
   const [auto, setAuto] = useState(!!cfg.autoStart);
   const target = useRef<number | null>(null);
+  /** Exact prices for the next ticks (the feature films script the chart with these). */
+  const script = useRef<number[]>([]);
+  /** The market cap Tippy's next sell fills at, when a film replays a real fill (it can land below the level). */
+  const fillMc = useRef<number | null>(null);
   const settingsNow = () => cfg.getSettings?.() ?? DEFAULT_SETTINGS;
 
   const live = useRef({ price, bag, plan, buys, cash });
@@ -131,7 +137,9 @@ export function useMarket(cfg: MarketConfig) {
     let { price: p, bag: b, plan: pl, cash: c } = live.current;
     const bs = live.current.buys;
     const goal = target.current;
-    if (goal != null) {
+    if (script.current.length) {
+      p = script.current.shift()!;
+    } else if (goal != null) {
       p = p + (goal - p) * 0.35 + p * (Math.random() - 0.5) * 0.04;
       if (Math.abs(goal - p) / goal < 0.03) target.current = null;
     } else {
@@ -158,10 +166,13 @@ export function useMarket(cfg: MarketConfig) {
           notice(sellFilledNotice(pl, a.level, { dryRun: true, soldPct: filledShare(before, pl) }));
           continue;
         }
+        const fp = fillMc.current != null ? fillMc.current / SUPPLY : p;
+        if (fillMc.current != null) pl = { ...pl, lastPrice: fp, lastMc: fillMc.current };
+        fillMc.current = null;
         const sold = b - a.targetRemaining;
         b = a.targetRemaining;
-        c += sold * p;
-        swap({ side: 'sell', usd: sold * p, mc: p * SUPPLY, by: 'tippy' });
+        c += sold * fp;
+        swap({ side: 'sell', usd: sold * fp, mc: fp * SUPPLY, by: 'tippy' });
         pl = applyOutcome(pl, a.level, { status: 'filled', balanceAfter: b, soldAmount: sold }, now);
         notice(sellFilledNotice(pl, a.level, { soldPct: pl.origBalance > 0 ? (sold / pl.origBalance) * 100 : null, emptied: sellsAll(a.level, a.targetRemaining) || b * p < 1 }));
       }
@@ -217,13 +228,13 @@ export function useMarket(cfg: MarketConfig) {
 
   useEffect(() => {
     const t = setInterval(() => {
-      if (auto || target.current != null) step();
+      if (auto || target.current != null || script.current.length) step();
     }, cfg.tickMs ?? 450);
     return () => clearInterval(t);
   }, [auto]);
 
   const kick = () => {
-    if (!auto && target.current == null) setAuto(true);
+    if (cfg.autoKick !== false && !auto && target.current == null) setAuto(true);
   };
   // One press is one move you can watch: about +50–90% up, −30–40% down.
   const pump = () => (target.current = live.current.price * (1.5 + Math.random() * 0.4));
@@ -364,7 +375,17 @@ export function useMarket(cfg: MarketConfig) {
     },
   };
 
-  return { price, history, bag, cash, plan, setPlan, buys, practice, notices, hint, swaps, tick: tickNo.current, auto, setAuto, token, api, chatCtx, pump, dump, reset, step, trade, notice, nudge };
+  /** Feature films: queue exact market caps for the next ticks (they play at the tick speed). */
+  const path = (mcs: number[]) => {
+    script.current = mcs.map((mc) => mc / SUPPLY); // replaces whatever was still queued
+  };
+  /** Feature films: ease to a market cap like a pump or dump would. */
+  const goTo = (mc: number) => {
+    target.current = mc / SUPPLY;
+  };
+
+  const fillAt = (mc: number | null) => (fillMc.current = mc);
+  return { price, history, bag, cash, plan, setPlan, buys, practice, notices, hint, swaps, fillAt, tick: tickNo.current, auto, setAuto, token, api, chatCtx, pump, dump, reset, step, trade, notice, nudge, path, goTo };
 }
 
 /** Sets an <input>'s value the way typing would, so Preact's onInput sees it. */
