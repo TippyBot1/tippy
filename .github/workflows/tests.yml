@@ -1,0 +1,26 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Extension — types
+        run: npm run typecheck --workspace extension
+      - name: Extension — tests
+        run: npm test --workspace extension
+      - name: Alerts worker — types
+        run: npm run typecheck --workspace alerts-worker
+      - name: Website — build
+        run: npm run build --workspace site

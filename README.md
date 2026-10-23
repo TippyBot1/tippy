@@ -2,7 +2,9 @@
 
 The orders fomo is missing — **take-profit, stop-loss and limit buys** — for [fomo](https://fomo.family) spot trades. Type a market cap, pick how much of your bag to sell, and Tippy presses fomo's own Sell button when the price gets there. Free, open source, no keys.
 
-**Website:** https://tippybot.fun · **Contact:** hello@tippybot.fun
+[![Tests](https://github.com/TippyBot1/tippy/actions/workflows/tests.yml/badge.svg)](https://github.com/TippyBot1/tippy/actions/workflows/tests.yml) [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/jgcaoiflcddgcifdcighcioakpjhgdoj?label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/jgcaoiflcddgcifdcighcioakpjhgdoj)
+
+**Website:** https://tippybot.fun · **Install:** [Chrome Web Store](https://chromewebstore.google.com/detail/jgcaoiflcddgcifdcighcioakpjhgdoj) · **What's new:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [issues](https://github.com/TippyBot1/tippy/issues?q=label%3Aroadmap) · **Contact:** hello@tippybot.fun
 
 Tippy is a browser extension that runs inside your own logged-in fomo.family tab. It needs no private keys, no wallet connection, and no server holding funds — which also means it only trades while your computer is awake and Chrome is open (it keeps the computer awake while your orders are on).
 
