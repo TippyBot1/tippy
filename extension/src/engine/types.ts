@@ -149,6 +149,16 @@ export interface Plan {
   lastPrice: number | null;
   lastMc: number | null;
   history: PlanEvent[];
+  /** "Getting close" alerts already sent for this plan (see engine/near.ts). */
+  near?: NearState;
+}
+
+/** What "getting close" alerts went out for a plan: one mark per level and milestone, and today's count. */
+export interface NearState {
+  sent: string[];
+  /** UTC day (YYYY-MM-DD) the count is for. */
+  day: string;
+  n: number;
 }
 
 export interface Quote {

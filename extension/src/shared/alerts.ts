@@ -9,7 +9,7 @@ import { KEEP_NOTICES, type Notice, type NoticeText } from './notices';
 import type { Settings } from './settings';
 import { load, save } from './store';
 
-export type AlertKind = 'filled' | 'failed' | 'attention' | 'ask' | 'blind' | 'logged-out' | 'guarding' | 'ui-changed' | 'test';
+export type AlertKind = 'filled' | 'failed' | 'attention' | 'ask' | 'blind' | 'logged-out' | 'guarding' | 'ui-changed' | 'test' | 'near';
 
 const lastSent = new Map<string, number>();
 const DEDUPE_MS = 10 * 60_000;

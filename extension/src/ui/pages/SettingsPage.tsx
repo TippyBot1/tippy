@@ -13,6 +13,10 @@ import { TelegramConnect } from '../TelegramConnect';
 
 const set = (patch: Partial<Settings>) => send({ type: 'SET_SETTINGS', patch });
 
+/** The milestones and stop distances the settings offer for "getting close" alerts. */
+const NEAR_TP = [25, 50, 75, 90];
+const NEAR_SL: (number | null)[] = [null, 10, 20, 30];
+
 function Switch({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
   return <button class="t-switch" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} />;
 }
@@ -167,6 +171,32 @@ export function SettingsPage() {
                 }}
               />
             </div>
+          </Setting>
+          <h3 class="t-subhead">Getting close</h3>
+          <p class="t-help">A heads-up before Tippy buys or sells, so a fill is never a surprise. They show on fomo, as desktop notifications and on Telegram when those are on.</p>
+          <Setting title="On the way to a take-profit" help="How far a coin has come from your entry towards its next take-profit. Tap to pick any mix.">
+            <div class="t-seg" role="group" aria-label="Take-profit milestones">
+              {NEAR_TP.map((m) => {
+                const on = s.near.tp.includes(m);
+                return (
+                  <button key={m} aria-pressed={on} onClick={() => set({ near: { ...s.near, tp: on ? s.near.tp.filter((x) => x !== m) : [...s.near.tp, m].sort((a, b) => a - b) } })}>
+                    {m}%
+                  </button>
+                );
+              })}
+            </div>
+          </Setting>
+          <Setting title="Close to a stop" help="When the price is within this much above a stop loss or partial stop.">
+            <div class="t-seg" role="group" aria-label="Stop warning distance">
+              {NEAR_SL.map((v) => (
+                <button key={String(v)} aria-pressed={s.near.sl === v} onClick={() => set({ near: { ...s.near, sl: v } })}>
+                  {v == null ? 'Off' : `${v}%`}
+                </button>
+              ))}
+            </div>
+          </Setting>
+          <Setting title="At most, per coin per day" help="Fills and stops always come through — this only limits the heads-ups.">
+            <NumberPill value={s.near.maxPerDay} suffix="a day" onChange={(v) => set({ near: { ...s.near, maxPerDay: Math.max(1, Math.round(v)) } })} />
           </Setting>
         </section>
 

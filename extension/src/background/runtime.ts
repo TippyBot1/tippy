@@ -5,6 +5,7 @@
 import { browser } from 'wxt/browser';
 import { blendedEntry, diffHoldings, presetToInput } from '../engine/autoguard';
 import { buyOwnsIncrease, evaluateBuy, isLiveBuy, PRIOR_PRESS_MS, pruneBuys, reconcileBuy, withdrawBuy } from '../engine/buys';
+import { nearAlerts } from '../engine/near';
 import { buildPlan, evaluate, hasInFlight, reconcile, rescale, sortActions, summarizePlan } from '../engine/orders';
 import type { Action, BuyAction, BuyOrder, Plan, SellAction } from '../engine/types';
 import { alert, heartbeat, notify } from '../shared/alerts';
@@ -241,6 +242,8 @@ async function tick(): Promise<number | null> {
   const expired: BuyOrder[] = [];
   /** Sells that weren't confirmed when pressed and just showed up in the balance. */
   const soldLate: { plan: Plan; sell: LateSell }[] = [];
+  /** "Getting close" heads-ups this tick. */
+  const nearNow: { key: string; title: string; text: string }[] = [];
   await withLock(async () => {
     const fresh = await load('plans', 'queue', 'baseline', 'status', 'buys');
     let plansNow = fresh.plans;
@@ -259,6 +262,10 @@ async function tick(): Promise<number | null> {
         const r = evaluate(p, { priceUSD: q.priceUSD, mc: q.mc, at: now }, bal, { now, gap, gapPolicy: settings.gapPolicy, minSellUsd, dustUsd: 1 });
         p = r.plan;
         fired.push(...r.actions);
+        // After the engine: a level that just fired isn't "getting close" any more.
+        const near = nearAlerts(p, { priceUSD: q.priceUSD, mc: q.mc, at: now }, settings.near, now);
+        if (near.near !== p.near) p = { ...p, near: near.near };
+        for (const a of near.alerts) nearNow.push({ key: p.key, ...a });
       }
       if (p.state === 'done' && plan.state !== 'done' && p.history.some((h) => h.kind === 'sold-elsewhere' && h.at === now)) goneNow.push(p);
       if (p.history.some((h) => h.kind === 'too-small' && h.at === now)) tooSmall.push(p);
@@ -384,6 +391,9 @@ async function tick(): Promise<number | null> {
   }
   for (const { order, guard } of bought) {
     await notify(settings, 'filled', buyFilledNotice(order, guard));
+  }
+  for (const a of nearNow) {
+    await notify(settings, 'near', { key: a.key, title: a.title, text: a.text, tone: 'info' });
   }
   for (const { plan, sell } of soldLate) {
     // Pressed long ago, or dry run is on (Tippy never really presses): it looks sold, but Tippy doesn't claim it.

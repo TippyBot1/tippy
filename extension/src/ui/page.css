@@ -39,6 +39,14 @@
   font-size: 16px;
   font-weight: 800;
 }
+/* a group inside a panel ("Getting close" under Alerts) */
+.t-subhead {
+  margin: 8px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--t-line);
+  font-size: 14px;
+  font-weight: 800;
+}
 .t-panel > p,
 .t-help {
   margin: 0;

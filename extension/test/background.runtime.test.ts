@@ -367,6 +367,17 @@ describe('the tick loop with limit buys', () => {
     expect(world.alerts.find((a) => a.title === 'Tippy filled order')?.text).toMatch(/^Stop loss hit — Tippy sold the rest of \$TST/);
   });
 
+  it('gives a heads-up on the way to a take-profit — once, not every tick', async () => {
+    seed([]);
+    world.storage.plans = { p1: tpPlan() };
+    setCoins(1_000);
+    setPrice(AT_LEVEL * 1.6); // 60% of the way from entry to the 2x take-profit
+    await run(10);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(titles()).toEqual(['📈 $TST is halfway to your take-profit']);
+    expect(world.alerts[0].text).toMatch(/^Take-profit 1 sells 50% of your bag at 2x\.$|now\. Take-profit 1 sells 50% of your bag at 2x\.$/);
+  });
+
   it('tells you when a buy expires', async () => {
     seed([buildBuy(buyInput({ expiresInMs: 5_000 } as Partial<BuyInput>))]);
     setPrice(ABOVE);

@@ -1,3 +1,4 @@
+import type { NearSettings } from '../engine/near';
 import { DEV_TOOLS } from './config';
 
 export interface Preset {
@@ -28,6 +29,8 @@ export interface Settings {
   maxImpactBuy: number;
   acceptRiskWarnings: boolean;
   notifications: boolean;
+  /** "Getting close" heads-ups: how far to a take-profit, how near a stop, how many a day. */
+  near: NearSettings;
   telegram: { linkId: string | null; linked: boolean };
   deskConsent: boolean;
   /**
@@ -97,6 +100,7 @@ export const DEFAULT_SETTINGS: Settings = {
   maxImpactBuy: 10,
   acceptRiskWarnings: true,
   notifications: false,
+  near: { tp: [50, 90], sl: 20, maxPerDay: 5 },
   telegram: { linkId: null, linked: false },
   deskConsent: false,
   stayAwake: true,
@@ -115,6 +119,7 @@ export function withDefaults(s: Partial<Settings> | undefined): Settings {
     autoGuard: { ...DEFAULT_SETTINGS.autoGuard, ...s?.autoGuard },
     focus: { ...DEFAULT_SETTINGS.focus, ...s?.focus },
     telegram: { ...DEFAULT_SETTINGS.telegram, ...s?.telegram },
+    near: { ...DEFAULT_SETTINGS.near, ...s?.near },
     presets: s?.presets?.length ? s.presets : DEFAULT_PRESETS,
     dryRun: DEV_TOOLS && !!s?.dryRun,
   };
