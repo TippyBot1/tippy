@@ -47,6 +47,10 @@ export interface World {
   telegramStarted: string[];
   /** newLinkId() results, in order. */
   linkIds: string[];
+  /** Commands typed to the Telegram bot, handed over with the next heartbeat. */
+  remote: { id: number; cmd: 'orders' | 'pause' | 'resume'; coin: string | null; at: number }[];
+  /** What Tippy answered in the Telegram chat. */
+  replies: string[];
 }
 
 function newWorld(): World {
@@ -70,6 +74,8 @@ function newWorld(): World {
     balancesSeq: [],
     telegramStarted: [],
     linkIds: ['link-1', 'link-2', 'link-3'],
+    remote: [],
+    replies: [],
   };
 }
 
@@ -188,6 +194,10 @@ export const fakeAlerts = {
   },
   async heartbeat(_settings: Settings, armed: number) {
     world.heartbeats.push(armed);
+    return world.remote.splice(0);
+  },
+  async reply(_settings: Settings, text: string) {
+    world.replies.push(text);
   },
   newLinkId: () => world.linkIds.shift() ?? 'link-x',
   linkStatus: async (id: string) => world.telegramStarted.includes(id),

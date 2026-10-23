@@ -8,7 +8,7 @@ import { buyOwnsIncrease, evaluateBuy, isLiveBuy, PRIOR_PRESS_MS, pruneBuys, rec
 import { nearAlerts } from '../engine/near';
 import { buildPlan, evaluate, hasInFlight, reconcile, rescale, sortActions, summarizePlan } from '../engine/orders';
 import type { Action, BuyAction, BuyOrder, Plan, SellAction } from '../engine/types';
-import { alert, heartbeat, notify } from '../shared/alerts';
+import { alert, heartbeat, notify, type RemoteCommand } from '../shared/alerts';
 import { isCashOrNative, parseKey } from '../shared/chains';
 import { STATUS_URL } from '../shared/config';
 import type { Holding, Status, TokenQuote } from '../shared/messages';
@@ -27,7 +27,8 @@ const IDLE_TICK_MS = 15_000;
 const BALANCES_EVERY_MS = 9_000;
 const GAP_MS = 120_000;
 const BLIND_ALERT_MS = 180_000;
-const HEARTBEAT_MS = 120_000;
+/** How often Tippy checks in with the alerts worker: the dead-man clock, and how soon a Telegram command arrives. */
+const HEARTBEAT_MS = 60_000;
 const REMOTE_STATUS_EVERY_MS = 30 * 60_000;
 const CONFIG_EVERY_MS = 30 * 60_000;
 
@@ -62,6 +63,25 @@ function resetDeskCounters(desk: number | null) {
   lastDeskReloadAt = 0;
 }
 let balances: Map<string, Holding> | null = null;
+
+let remoteHandler: ((cmds: RemoteCommand[]) => Promise<void>) | null = null;
+
+/** Where commands typed to the Telegram bot go (background/remote.ts — set by the background entrypoint). */
+export function onRemoteCommands(fn: (cmds: RemoteCommand[]) => Promise<void>): void {
+  remoteHandler = fn;
+}
+
+/** Heartbeat every minute (and whenever the armed count changes); runs any commands it brings back. */
+function checkIn(settings: Settings, armed: number, now: number): void {
+  if (now - lastHeartbeatAt <= HEARTBEAT_MS && armed === lastArmedReported) return;
+  lastHeartbeatAt = now;
+  lastArmedReported = armed;
+  void heartbeat(settings, armed)
+    .then(async (cmds) => {
+      if (cmds.length && remoteHandler) await remoteHandler(cmds);
+    })
+    .catch((e) => console.error('[tippy] Telegram commands failed', e));
+}
 
 /** Start (or nudge) the loop. Safe to call from any event. */
 export function kick() {
@@ -105,6 +125,10 @@ async function tick(): Promise<number | null> {
   const watching = armed > 0 || settings.autoGuard.enabled;
 
   void keepAwake(settings.stayAwake && armed > 0 && !settings.paused);
+  // Check in whatever else is going on (paused, idle, blind), so /resume and /orders
+  // from Telegram always get through. Paused counts as nothing armed: you paused on
+  // purpose, so no "Tippy stopped watching".
+  checkIn(settings, settings.paused ? 0 : armed, now);
 
   if (status.health === 'killed') return null;
   if (!watching) {
@@ -114,11 +138,6 @@ async function tick(): Promise<number | null> {
     status.blindSince = null;
     // lastTickAt: 0 → arming later isn't mistaken for "woke up from a sleep".
     if (status.health !== 'idle' || status.lastTickAt) await setHealth(status, 'idle', 'Nothing to guard yet.', { lastTickAt: 0 });
-    // Tell the alerts worker nothing is armed, so its dead-man alert stays quiet.
-    if (lastArmedReported > 0) {
-      lastArmedReported = 0;
-      void heartbeat(settings, 0);
-    }
     return null;
   }
   if (settings.paused) {
@@ -405,12 +424,6 @@ async function tick(): Promise<number | null> {
   }
   for (const o of expired) {
     await notify(settings, 'attention', buyExpiredNotice(o));
-  }
-
-  if (now - lastHeartbeatAt > HEARTBEAT_MS || armed !== lastArmedReported) {
-    lastHeartbeatAt = now;
-    lastArmedReported = armed;
-    void heartbeat(settings, armed);
   }
 
   void processQueue();

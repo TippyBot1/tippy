@@ -9,7 +9,22 @@ import { KEEP_NOTICES, type Notice, type NoticeText } from './notices';
 import type { Settings } from './settings';
 import { load, save } from './store';
 
-export type AlertKind = 'filled' | 'failed' | 'attention' | 'ask' | 'blind' | 'logged-out' | 'guarding' | 'ui-changed' | 'test' | 'near';
+export type AlertKind = 'filled' | 'failed' | 'attention' | 'ask' | 'blind' | 'logged-out' | 'guarding' | 'ui-changed' | 'test' | 'near' | 'reply';
+
+/** A command typed to @TippyAlertsBot, handed over with a heartbeat (see background/remote.ts). */
+export interface RemoteCommand {
+  id: number;
+  cmd: 'orders' | 'pause' | 'resume';
+  /** A ticker without the $ ("TIPPY"), or null for everything. */
+  coin: string | null;
+  /** When it was typed. */
+  at: number;
+}
+
+const isRemoteCommand = (c: unknown): c is RemoteCommand => {
+  const r = c as RemoteCommand;
+  return !!r && typeof r.id === 'number' && ['orders', 'pause', 'resume'].includes(r.cmd) && (r.coin === null || (typeof r.coin === 'string' && /^[A-Z0-9]{1,15}$/.test(r.coin))) && typeof r.at === 'number';
+};
 
 const lastSent = new Map<string, number>();
 const DEDUPE_MS = 10 * 60_000;
@@ -94,15 +109,31 @@ async function telegram(settings: Settings, kind: AlertKind, text: string) {
   });
 }
 
-/** Dead-man heartbeat: the worker alerts you if these stop while orders are armed. */
-export async function heartbeat(settings: Settings, armed: number): Promise<void> {
+/**
+ * Dead-man heartbeat: the worker alerts you if these stop while orders are armed.
+ * Its answer carries any commands typed to the bot since (/orders, /pause, /resume).
+ */
+export async function heartbeat(settings: Settings, armed: number): Promise<RemoteCommand[]> {
   const { linkId, linked } = settings.telegram;
-  if (!linkId || !linked) return;
-  await fetch(`${ALERTS_URL}/heartbeat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ linkId, armed }),
-  }).catch(() => {});
+  if (!linkId || !linked) return [];
+  try {
+    const res = await fetch(`${ALERTS_URL}/heartbeat`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      // remote: this Tippy carries out /orders, /pause and /resume (older ones don't).
+      body: JSON.stringify({ linkId, armed, remote: 1 }),
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { commands?: unknown };
+    return Array.isArray(body?.commands) ? body.commands.filter(isRemoteCommand) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** A plain answer in the Telegram chat (to a command typed there). */
+export async function reply(settings: Settings, text: string): Promise<void> {
+  await telegram(settings, 'reply', text).catch(() => {});
 }
 
 export function newLinkId(): string {

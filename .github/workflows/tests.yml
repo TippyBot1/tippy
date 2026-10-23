@@ -22,5 +22,7 @@ jobs:
         run: npm test --workspace extension
       - name: Alerts worker — types
         run: npm run typecheck --workspace alerts-worker
+      - name: Alerts worker — tests
+        run: npm test --workspace alerts-worker
       - name: Website — build
         run: npm run build --workspace site

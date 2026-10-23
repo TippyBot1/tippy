@@ -378,6 +378,17 @@ describe('the tick loop with limit buys', () => {
     expect(world.alerts[0].text).toMatch(/^Take-profit 1 sells 50% of your bag at 2x\.$|now\. Take-profit 1 sells 50% of your bag at 2x\.$/);
   });
 
+  it('checks in while paused — reporting nothing armed — and hands Telegram commands over', async () => {
+    seed([], { paused: true });
+    world.storage.plans = { p1: tpPlan() };
+    const got: string[] = [];
+    runtime.onRemoteCommands(async (cmds) => void got.push(...cmds.map((c) => `${c.cmd}:${c.coin ?? 'all'}`)));
+    world.remote.push({ id: 1, cmd: 'resume', coin: null, at: T0 });
+    await run(10);
+    expect(world.heartbeats).toEqual([0]); // paused on purpose: no "Tippy stopped watching"
+    expect(got).toEqual(['resume:all']);
+  });
+
   it('tells you when a buy expires', async () => {
     seed([buildBuy(buyInput({ expiresInMs: 5_000 } as Partial<BuyInput>))]);
     setPrice(ABOVE);

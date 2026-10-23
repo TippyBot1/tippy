@@ -1,7 +1,8 @@
 import { browser } from 'wxt/browser';
 import { handleCommand } from '../background/commands';
 import { keepAlive } from '../background/relay';
-import { backstop, clearStaleExecuting, kick } from '../background/runtime';
+import { runRemote } from '../background/remote';
+import { backstop, clearStaleExecuting, kick, onRemoteCommands } from '../background/runtime';
 import { hookNotificationClicks } from '../shared/alerts';
 import type { Command } from '../shared/messages';
 import { load } from '../shared/store';
@@ -12,6 +13,9 @@ export default defineBackground(() => {
     kick();
   });
   browser.runtime.onStartup.addListener(() => kick());
+
+  // /orders, /pause and /resume typed to the Telegram bot, picked up with the heartbeat.
+  onRemoteCommands(runRemote);
 
   // Clicking a "Tippy filled order" notification opens that coin on fomo.
   hookNotificationClicks();

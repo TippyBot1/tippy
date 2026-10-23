@@ -7,11 +7,21 @@ shipped yet.
 ## [Unreleased]
 
 ### Added
+- **Control Tippy from Telegram.** Message @TippyAlertsBot: /orders lists every
+  coin Tippy is guarding with its next levels, /pause and /resume work for
+  everything or one coin (/pause $TIPPY). Tippy picks commands up when it checks
+  in, about once a minute, and answers in the chat. Nothing is bought or sold
+  from Telegram.
 - **Getting-close alerts.** A heads-up when a coin is part of the way from your
   entry to its next take-profit (50% and 90% by default), or within 20% above a
   stop. Pick any mix of 25 / 50 / 75 / 90% and off / 10 / 20 / 30% in
   Settings → Alerts, with at most 5 per coin per day. They show on fomo, as
   desktop notifications and on Telegram.
+
+### Changed
+- Tippy checks in with the alerts server every minute (was two), and keeps
+  checking in while paused — reporting nothing armed, so pausing on purpose no
+  longer sets off "Tippy stopped watching".
 
 ## [0.1.2] — 2026-10-16
 

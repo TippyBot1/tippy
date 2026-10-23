@@ -1,109 +1,163 @@
 [
   {
     "title": "Getting-close alerts: halfway to a take-profit, near a stop",
-    "labels": ["roadmap", "alerts"],
+    "labels": [
+      "roadmap",
+      "alerts"
+    ],
     "state": "closed",
     "body": "A heads-up before Tippy buys or sells: when a coin is part of the way from your entry to its next take-profit (50% and 90% by default), or within 20% above a stop. Choose the milestones, the stop distance and a daily cap per coin in Settings → Alerts.\n\nDone in 887f984 — ships in the next version."
   },
   {
     "title": "Control Tippy from Telegram: see your orders, pause and resume",
-    "labels": ["roadmap", "telegram"],
-    "state": "open",
-    "body": "/orders lists every coin Tippy is guarding and its next levels. /pause and /resume work for everything or one coin (/pause $TIPPY). Commands reach Tippy on your computer within about a minute; nothing is sold or bought from Telegram."
+    "labels": [
+      "roadmap",
+      "telegram"
+    ],
+    "state": "closed",
+    "body": "/orders lists every coin Tippy is guarding and its next levels. /pause and /resume work for everything or one coin (/pause $TIPPY). Commands reach Tippy on your computer within about a minute; nothing is sold or bought from Telegram.\n\nDone in main — ships in the next version."
   },
   {
     "title": "Telegram: cancel a coin's orders",
-    "labels": ["roadmap", "telegram"],
+    "labels": [
+      "roadmap",
+      "telegram"
+    ],
     "state": "open",
     "body": "/cancel $COIN stops guarding a coin from your phone. Nothing gets sold."
   },
   {
     "title": "Telegram: sell from your phone, with a confirmation step",
-    "labels": ["roadmap", "telegram"],
+    "labels": [
+      "roadmap",
+      "telegram"
+    ],
     "state": "open",
     "body": "/sell $COIN 50% asks you to confirm with a one-time code before Tippy sells on your computer. Off until you switch it on in Tippy's settings, because anyone in your Telegram could use it."
   },
   {
     "title": "Ask-first stop losses on Telegram after a sleep",
-    "labels": ["roadmap", "telegram"],
+    "labels": [
+      "roadmap",
+      "telegram"
+    ],
     "state": "open",
     "body": "With \"Ask me first\" on, a stop that hit while your computer was asleep asks on Telegram — Sell now or Keep — instead of waiting for you at the computer."
   },
   {
     "title": "Take out my initials",
-    "labels": ["roadmap", "orders"],
+    "labels": [
+      "roadmap",
+      "orders"
+    ],
     "state": "open",
     "body": "One tap sells exactly enough at your chosen multiple (2x by default) to get your original money back, so the rest rides for free."
   },
   {
     "title": "Break-even stop after the first take-profit",
-    "labels": ["roadmap", "orders"],
+    "labels": [
+      "roadmap",
+      "orders"
+    ],
     "state": "open",
     "body": "Once take-profit 1 fills, Tippy can move your stop up to your entry, so a winning trade can't turn into a loss."
   },
   {
     "title": "Alert-only levels",
-    "labels": ["roadmap", "alerts"],
+    "labels": [
+      "roadmap",
+      "alerts"
+    ],
     "state": "open",
     "body": "\"Tell me if it hits $1M\" without selling anything — on fomo, as a desktop notification and on Telegram."
   },
   {
     "title": "Show trailing stops by default",
-    "labels": ["roadmap", "orders"],
+    "labels": [
+      "roadmap",
+      "orders"
+    ],
     "state": "open",
     "body": "Trailing stops are built but hidden behind a setting. Put them in Tippy's window for everyone."
   },
   {
     "title": "History of what Tippy did, with CSV export",
-    "labels": ["roadmap", "app"],
+    "labels": [
+      "roadmap",
+      "app"
+    ],
     "state": "open",
     "body": "A list of every fill with what it made or saved, and a CSV download for your records."
   },
   {
     "title": "Laddered limit buys",
-    "labels": ["roadmap", "orders"],
+    "labels": [
+      "roadmap",
+      "orders"
+    ],
     "state": "open",
     "body": "Split a buy into steps: $10 at $500K, $10 at $400K, $10 at $300K."
   },
   {
     "title": "Time-based exits",
-    "labels": ["roadmap", "orders"],
+    "labels": [
+      "roadmap",
+      "orders"
+    ],
     "state": "open",
     "body": "\"If it hasn't hit 2x in 24 hours, sell half.\""
   },
   {
     "title": "Per-coin presets for Auto-guard",
-    "labels": ["roadmap", "orders"],
+    "labels": [
+      "roadmap",
+      "orders"
+    ],
     "state": "open",
     "body": "Different rules for big and small coins, chosen by market cap when Auto-guard picks up a new buy."
   },
   {
     "title": "Edge Add-ons listing",
-    "labels": ["roadmap", "distribution"],
+    "labels": [
+      "roadmap",
+      "distribution"
+    ],
     "state": "open",
     "body": "Publish Tippy on Microsoft Edge Add-ons, so Edge users install it from Microsoft's own store."
   },
   {
     "title": "\"What's new\" page on tippybot.fun",
-    "labels": ["roadmap", "website"],
+    "labels": [
+      "roadmap",
+      "website"
+    ],
     "state": "open",
     "body": "A dated changelog on the website, from CHANGELOG.md."
   },
   {
     "title": "Feature videos on the Features page",
-    "labels": ["roadmap", "website"],
+    "labels": [
+      "roadmap",
+      "website"
+    ],
     "state": "open",
     "body": "Each of the eight 20-second feature videos next to the feature it shows."
   },
   {
     "title": "Help guides",
-    "labels": ["roadmap", "website"],
+    "labels": [
+      "roadmap",
+      "website"
+    ],
     "state": "open",
     "body": "First setup, keeping Chrome awake, Telegram setup, and what happens if your laptop sleeps."
   },
   {
     "title": "A GitHub release for every store version",
-    "labels": ["roadmap", "trust"],
+    "labels": [
+      "roadmap",
+      "trust"
+    ],
     "state": "open",
     "body": "Each Chrome Web Store version gets a matching tagged release with its changelog, so anyone can check the published extension against the code."
   }
