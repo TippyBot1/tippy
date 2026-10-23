@@ -23,8 +23,8 @@
       "roadmap",
       "telegram"
     ],
-    "state": "open",
-    "body": "/cancel $COIN stops guarding a coin from your phone. Nothing gets sold."
+    "state": "closed",
+    "body": "/cancel $COIN stops guarding a coin from your phone. Nothing gets sold. Also cancels its limit buys; one coin at a time.\n\nDone in main — ships in the next version."
   },
   {
     "title": "Telegram: sell from your phone, with a confirmation step",

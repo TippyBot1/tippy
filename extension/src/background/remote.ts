@@ -1,8 +1,8 @@
 // Commands typed to @TippyAlertsBot on your phone, picked up when Tippy checks
 // in with the alerts worker (about once a minute): /orders shows what Tippy is
-// guarding, /pause and /resume work for everything or one coin ($TIPPY). They
-// only ever look or pause — nothing is bought or sold from Telegram. Each one
-// gets an answer in the chat.
+// guarding, /pause and /resume work for everything or one coin ($TIPPY), and
+// /cancel $TIPPY cancels one coin's orders. They only ever look, pause or cancel
+// — nothing is bought or sold from Telegram. Each one gets an answer in the chat.
 
 import { isLiveBuy } from '../engine/buys';
 import { currentX, summarizePlan } from '../engine/orders';
@@ -32,6 +32,7 @@ export async function runRemote(cmds: RemoteCommand[]): Promise<void> {
 
 async function answer(c: RemoteCommand): Promise<string> {
   if (c.cmd === 'orders') return ordersText();
+  if (c.cmd === 'cancel') return c.coin ? cancel(c.coin) : 'Which coin? Cancelling is one coin at a time, like /cancel $TIPPY.';
   const pause = c.cmd === 'pause';
   const { settings, plans } = await load('settings', 'plans');
 
@@ -48,6 +49,21 @@ async function answer(c: RemoteCommand): Promise<string> {
   for (const p of todo) await handleCommand({ type: pause ? 'PAUSE_PLAN' : 'RESUME_PLAN', planId: p.id });
   const off = !pause && settings.paused ? ' Tippy as a whole is still paused — /resume to switch everything back on.' : '';
   return pause ? `⏸️ Paused ${sym(c.coin)}. Its orders stay put; /resume ${sym(c.coin)} switches them back on.` : `▶️ ${sym(c.coin)} is back on.${off}`;
+}
+
+/** Every order on one coin: its plan (Tippy stops guarding it — nothing is sold) and its limit buys. */
+async function cancel(coin: string): Promise<string> {
+  const { plans, buys } = await load('plans', 'buys');
+  const mine = Object.values(plans).filter((p) => guarded(p) && sameCoin(p, coin));
+  const waiting = Object.values(buys).filter((o) => isLiveBuy(o) && sameCoin(o, coin));
+  if (!mine.length && !waiting.length) return `Tippy has no orders on ${sym(coin)}. /orders shows what it's guarding.`;
+  for (const p of mine) await handleCommand({ type: 'CANCEL_PLAN', planId: p.id });
+  for (const o of waiting) await handleCommand({ type: 'CANCEL_BUY', orderId: o.id });
+  const done = [
+    mine.length ? 'Tippy stopped guarding it — nothing was sold' : null,
+    waiting.length ? `${waiting.length === 1 ? 'its limit buy is' : `its ${waiting.length} limit buys are`} cancelled` : null,
+  ].filter(Boolean);
+  return `🗑️ ${sym(coin)}: ${done.join(', and ')}.`;
 }
 
 async function ordersText(): Promise<string> {

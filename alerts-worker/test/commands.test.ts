@@ -18,6 +18,13 @@ describe('parseCommand', () => {
     expect(parseCommand('/pause@TippyAlertsBot $TIPPY')).toEqual({ kind: 'queue', cmd: 'pause', coin: 'TIPPY' });
   });
 
+  it('cancels one coin at a time — never every order at once', () => {
+    expect(parseCommand('/cancel $tippy')).toEqual({ kind: 'queue', cmd: 'cancel', coin: 'TIPPY' });
+    expect(parseCommand('/cancel')).toEqual({ kind: 'bad-coin', cmd: 'cancel' });
+    expect(parseCommand('/cancel all')).toEqual({ kind: 'bad-coin', cmd: 'cancel' });
+    expect(ackText('cancel', 'TIPPY', 1, 2)).toBe("⏳ Cancelling $TIPPY's orders… (Tippy checks in about once a minute.)");
+  });
+
   it('asks which coin when the ticker is nonsense', () => {
     expect(parseCommand('/pause $$$')).toEqual({ kind: 'bad-coin', cmd: 'pause' });
     expect(parseCommand('/pause averyveryverylongtickername')).toEqual({ kind: 'bad-coin', cmd: 'pause' });

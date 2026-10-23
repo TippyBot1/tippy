@@ -14,7 +14,7 @@ export type AlertKind = 'filled' | 'failed' | 'attention' | 'ask' | 'blind' | 'l
 /** A command typed to @TippyAlertsBot, handed over with a heartbeat (see background/remote.ts). */
 export interface RemoteCommand {
   id: number;
-  cmd: 'orders' | 'pause' | 'resume';
+  cmd: 'orders' | 'pause' | 'resume' | 'cancel';
   /** A ticker without the $ ("TIPPY"), or null for everything. */
   coin: string | null;
   /** When it was typed. */
@@ -23,7 +23,7 @@ export interface RemoteCommand {
 
 const isRemoteCommand = (c: unknown): c is RemoteCommand => {
   const r = c as RemoteCommand;
-  return !!r && typeof r.id === 'number' && ['orders', 'pause', 'resume'].includes(r.cmd) && (r.coin === null || (typeof r.coin === 'string' && /^[A-Z0-9]{1,15}$/.test(r.coin))) && typeof r.at === 'number';
+  return !!r && typeof r.id === 'number' && ['orders', 'pause', 'resume', 'cancel'].includes(r.cmd) && (r.coin === null || (typeof r.coin === 'string' && /^[A-Z0-9]{1,15}$/.test(r.coin))) && typeof r.at === 'number';
 };
 
 const lastSent = new Map<string, number>();
@@ -120,8 +120,8 @@ export async function heartbeat(settings: Settings, armed: number): Promise<Remo
     const res = await fetch(`${ALERTS_URL}/heartbeat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      // remote: this Tippy carries out /orders, /pause and /resume (older ones don't).
-      body: JSON.stringify({ linkId, armed, remote: 1 }),
+      // remote: the commands this Tippy carries out — 2 = /orders, /pause, /resume and /cancel.
+      body: JSON.stringify({ linkId, armed, remote: 2 }),
     });
     if (!res.ok) return [];
     const body = (await res.json()) as { commands?: unknown };

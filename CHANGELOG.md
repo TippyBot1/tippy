@@ -9,9 +9,10 @@ shipped yet.
 ### Added
 - **Control Tippy from Telegram.** Message @TippyAlertsBot: /orders lists every
   coin Tippy is guarding with its next levels, /pause and /resume work for
-  everything or one coin (/pause $TIPPY). Tippy picks commands up when it checks
-  in, about once a minute, and answers in the chat. Nothing is bought or sold
-  from Telegram.
+  everything or one coin (/pause $TIPPY), and /cancel $TIPPY cancels one coin's
+  orders and limit buys (one coin at a time, nothing is sold). Tippy picks
+  commands up when it checks in, about once a minute, and answers in the chat.
+  Nothing is bought or sold from Telegram.
 - **Getting-close alerts.** A heads-up when a coin is part of the way from your
   entry to its next take-profit (50% and 90% by default), or within 20% above a
   stop. Pick any mix of 25 / 50 / 75 / 90% and off / 10 / 20 / 30% in

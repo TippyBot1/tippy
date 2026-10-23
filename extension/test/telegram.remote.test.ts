@@ -118,8 +118,19 @@ describe('/pause and /resume', () => {
     expect(world.replies[0]).toMatch(/^\(Your message from 12 min ago — Tippy was offline\.\)\n⏸️ Paused\./);
   });
 
+  it('/cancel cancels one coin\'s plan and its limit buys — nothing is sold', async () => {
+    world.storage.buys = { b1: buildBuy(buyInput({ symbol: 'TIPPY', key: 'TIPPY:' + SOL } as never)) };
+    await runRemote([cmd('cancel', 'TIPPY')]);
+    expect(world.storage.plans!.a.state).toBe('cancelled');
+    expect(world.storage.plans!.b.state).toBe('armed');
+    expect(world.storage.buys!.b1.state).toBe('cancelled');
+    expect(world.replies.at(-1)).toBe('🗑️ $TIPPY: Tippy stopped guarding it — nothing was sold, and its limit buy is cancelled.');
+    await runRemote([cmd('cancel', 'TIPPY')]);
+    expect(world.replies.at(-1)).toBe("Tippy has no orders on $TIPPY. /orders shows what it's guarding.");
+  });
+
   it('never sells or buys: nothing is queued and fomo is never asked to trade', async () => {
-    await runRemote([cmd('orders'), cmd('pause', 'TIPPY'), cmd('resume', 'TIPPY'), cmd('pause'), cmd('resume')]);
+    await runRemote([cmd('orders'), cmd('pause', 'TIPPY'), cmd('resume', 'TIPPY'), cmd('pause'), cmd('resume'), cmd('cancel', 'WIF')]);
     expect(world.storage.queue).toEqual([]);
     expect(world.requests.filter((r) => r.req.type === 'EXECUTE' || r.req.type === 'EXECUTE_BUY')).toEqual([]);
     expect(KEY).toBeTruthy();

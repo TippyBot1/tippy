@@ -11,6 +11,7 @@ CREATE TABLE inbox (
 CREATE INDEX inbox_link ON inbox (link_id, id);
 CREATE INDEX inbox_age ON inbox (created_at);
 
--- 1 once this link's Tippy has said (in a heartbeat) that it carries out commands.
--- Older versions don't, so the bot tells those users to update instead of queueing.
+-- The command set this link's Tippy said (in its heartbeat) it carries out:
+-- 0 = none (older versions — the bot tells them to update), 1 = orders/pause/resume,
+-- 2 = + cancel. See NEEDS in src/commands.ts.
 ALTER TABLE links ADD COLUMN remote INTEGER NOT NULL DEFAULT 0;

@@ -10,7 +10,7 @@
 // Plain-text messages only (no HTML/Markdown parse mode), so nothing an
 // extension sends can turn into a link or formatting trick.
 
-import { ackText, HELP, MENU, parseCommand } from './commands';
+import { ackText, HELP, MENU, NEEDS, parseCommand } from './commands';
 
 export interface Env {
   DB: D1Database;
@@ -117,9 +117,10 @@ async function telegramWebhook(req: Request, env: Env): Promise<Response> {
     await send(env, chatId, HELP);
     await setMenu(env);
   } else if (parsed.kind === 'bad-coin') {
-    await send(env, chatId, `Which coin? Use its ticker, like /${parsed.cmd} $TIPPY — or /${parsed.cmd} on its own for everything.`);
+    await send(env, chatId, parsed.cmd === 'cancel' ? 'Which coin? Cancelling is one coin at a time, like /cancel $TIPPY. To stop everything for now, /pause.' : `Which coin? Use its ticker, like /${parsed.cmd} $TIPPY — or /${parsed.cmd} on its own for everything.`);
   } else if (parsed.kind === 'queue') {
-    if (!links.some((l) => l.remote)) {
+    const need = NEEDS[parsed.cmd];
+    if (!links.some((l) => l.remote >= need)) {
       await send(env, chatId, 'Your Tippy is an older version that can’t take commands from Telegram yet. Chrome updates extensions by itself within a day — or go to chrome://extensions and press Update. Alerts keep working meanwhile.');
       return new Response('ok');
     }
@@ -128,7 +129,7 @@ async function telegramWebhook(req: Request, env: Env): Promise<Response> {
       return new Response('ok');
     }
     const now = Date.now();
-    const able = links.filter((l) => l.remote);
+    const able = links.filter((l) => l.remote >= need);
     for (const l of able) {
       await env.DB.prepare('INSERT INTO inbox (link_id, cmd, coin, created_at) VALUES (?, ?, ?, ?)').bind(l.link_id, parsed.cmd, parsed.coin, now).run();
     }
@@ -171,7 +172,7 @@ async function heartbeat(req: Request, env: Env): Promise<Response> {
   const armed = Math.max(0, Math.min(500, Math.floor(Number(body.armed) || 0)));
   const prev = await env.DB.prepare('SELECT chat_id, deadman_sent FROM links WHERE link_id = ?').bind(body.linkId).first<{ chat_id: number; deadman_sent: number }>();
   if (!prev) return json({ ok: false, error: 'not linked' }, 404);
-  await env.DB.prepare('UPDATE links SET last_heartbeat = ?, armed = ?, deadman_sent = 0, remote = ? WHERE link_id = ?').bind(Date.now(), armed, body.remote === 1 ? 1 : 0, body.linkId).run();
+  await env.DB.prepare('UPDATE links SET last_heartbeat = ?, armed = ?, deadman_sent = 0, remote = ? WHERE link_id = ?').bind(Date.now(), armed, Math.max(0, Math.min(9, Math.floor(Number(body.remote) || 0))), body.linkId).run();
   if (prev.deadman_sent && armed > 0) await send(env, prev.chat_id, `✅ Tippy is back and watching your ${armed} coin${armed === 1 ? '' : 's'}.`);
   // Commands waiting for this Tippy (oldest first); handed over once.
   const { results } = await env.DB.prepare('SELECT id, cmd, coin, created_at FROM inbox WHERE link_id = ? ORDER BY id LIMIT 10').bind(body.linkId).all<{
